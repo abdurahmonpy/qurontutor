@@ -24,13 +24,20 @@ class SurahSerializer(serializers.ModelSerializer):
 class AyahSerializer(serializers.ModelSerializer):
     user_status = serializers.SerializerMethodField()
     best_score = serializers.SerializerMethodField()
+    ayah_number = serializers.IntegerField(source='number_in_surah', read_only=True)
+    transliteration = serializers.CharField(source='text_translit', read_only=True)
+    translation_uz = serializers.CharField(source='text_translation_uz', read_only=True)
+    audio_url = serializers.CharField(source='official_audio_url', read_only=True)
 
     class Meta:
         model = Ayah
         fields = [
-            'id', 'surah', 'number_in_surah', 'number_global',
-            'text_arabic_tajweed', 'text_arabic_clean', 'text_translit',
-            'text_translation_uz', 'official_audio_url', 'user_status', 'best_score'
+            'id', 'surah', 'number_in_surah', 'ayah_number', 'number_global',
+            'text_arabic_tajweed', 'text_arabic_clean',
+            'text_translit', 'transliteration',
+            'text_translation_uz', 'translation_uz',
+            'official_audio_url', 'audio_url',
+            'user_status', 'best_score'
         ]
 
     def get_user_status(self, obj):

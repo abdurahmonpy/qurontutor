@@ -5,43 +5,107 @@
   // Relative API URL - always points to the current server (Railway, local, or custom domain)
   const API_BASE = '/api';
 
-  // Fallback Sample Data if network is down or database is initializing
-  const BACKUP_SURAHS = [
+  // Default Fatiha ayahs fallback for offline resiliency
+  const DEFAULT_FATIHA_AYAHS = [
     {
       id: 1,
-      number: 1,
-      name_uz: 'Fotiha',
-      name_arabic: 'الفاتحة',
-      ayah_count: 7
+      number_in_surah: 1,
+      ayah_number: 1,
+      text_arabic_tajweed: 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+      text_arabic_clean: 'بسم الله الرحمن الرحيم',
+      text_translit: 'Bismillahir Rohmanir Rohiym',
+      transliteration: 'Bismillahir Rohmanir Rohiym',
+      text_translation_uz: 'Mehribon va rahmli Allohning nomi ila boshlayman.',
+      translation_uz: 'Mehribon va rahmli Allohning nomi ila boshlayman.',
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001001.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001001.mp3'
     },
     {
-      id: 112,
-      number: 112,
-      name_uz: 'Ixlos',
-      name_arabic: 'الإخلاص',
-      ayah_count: 4
+      id: 2,
+      number_in_surah: 2,
+      ayah_number: 2,
+      text_arabic_tajweed: 'ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ',
+      text_arabic_clean: 'الحمد لله رب العالمين',
+      text_translit: "Alhamdu lillahi Robbil 'alamiyn",
+      transliteration: "Alhamdu lillahi Robbil 'alamiyn",
+      text_translation_uz: 'Hamd butun olamlar Parvardigori Allohgadir.',
+      translation_uz: 'Hamd butun olamlar Parvardigori Allohgadir.',
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001002.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001002.mp3'
     },
     {
-      id: 113,
-      number: 113,
-      name_uz: 'Falaq',
-      name_arabic: 'الفلق',
-      ayah_count: 5
+      id: 3,
+      number_in_surah: 3,
+      ayah_number: 3,
+      text_arabic_tajweed: 'ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+      text_arabic_clean: 'الرحمن الرحيم',
+      text_translit: 'Ar-Rohmanir-Rohiym',
+      transliteration: 'Ar-Rohmanir-Rohiym',
+      text_translation_uz: 'U Mehribon va Rahmlidir.',
+      translation_uz: 'U Mehribon va Rahmlidir.',
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001003.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001003.mp3'
     },
     {
-      id: 114,
-      number: 114,
-      name_uz: 'Nos',
-      name_arabic: 'الناس',
-      ayah_count: 6
+      id: 4,
+      number_in_surah: 4,
+      ayah_number: 4,
+      text_arabic_tajweed: 'مَٰلِكِ يَوْمِ ٱلدِّينِ',
+      text_arabic_clean: 'مالك يوم الدين',
+      text_translit: 'Maliki yavmid-diyn',
+      transliteration: 'Maliki yavmid-diyn',
+      text_translation_uz: 'Qiyomat kunining Egasidir.',
+      translation_uz: 'Qiyomat kunining Egasidir.',
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001004.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001004.mp3'
     },
     {
-      id: 108,
-      number: 108,
-      name_uz: 'Kavsar',
-      name_arabic: 'الكوثر',
-      ayah_count: 3
+      id: 5,
+      number_in_surah: 5,
+      ayah_number: 5,
+      text_arabic_tajweed: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+      text_arabic_clean: 'إياك نعبد وإياك نستعين',
+      text_translit: "Iyyaka na'budu va iyyaka nasta'iyn",
+      transliteration: "Iyyaka na'budu va iyyaka nasta'iyn",
+      text_translation_uz: "Faqat Sengagina ibodat qilamiz va faqat Sendangina yordam so'raymiz.",
+      translation_uz: "Faqat Sengagina ibodat qilamiz va faqat Sendangina yordam so'raymiz.",
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001005.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001005.mp3'
+    },
+    {
+      id: 6,
+      number_in_surah: 6,
+      ayah_number: 6,
+      text_arabic_tajweed: 'ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ',
+      text_arabic_clean: 'اهدنا الصراط المستقيم',
+      text_translit: 'Ihdinas-sirotol-mustaqiym',
+      transliteration: 'Ihdinas-sirotol-mustaqiym',
+      text_translation_uz: "Bizni to'g'ri yo'lga hidoyat qilgin.",
+      translation_uz: "Bizni to'g'ri yo'lga hidoyat qilgin.",
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001006.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001006.mp3'
+    },
+    {
+      id: 7,
+      number_in_surah: 7,
+      ayah_number: 7,
+      text_arabic_tajweed: 'صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ',
+      text_arabic_clean: 'صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين',
+      text_translit: "Sirotollaziyna an'amta 'alayhim g'oyril mag'dubi 'alayhim valad-doolliyn",
+      transliteration: "Sirotollaziyna an'amta 'alayhim g'oyril mag'dubi 'alayhim valad-doolliyn",
+      text_translation_uz: "O'zing ne'mat berganlarning yo'liga, g'azabga uchraganlarnikiga emas va zalolatga ketganlarnikiga ham emas.",
+      translation_uz: "O'zing ne'mat berganlarning yo'liga, g'azabga uchraganlarnikiga emas va zalolatga ketganlarnikiga ham emas.",
+      official_audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001007.mp3',
+      audio_url: 'https://everyayah.com/data/Alafasy_128kbps/001007.mp3'
     }
+  ];
+
+  const BACKUP_SURAHS = [
+    { id: 1, number: 1, name_uz: 'Fotiha', name_arabic: 'الفاتحة', ayah_count: 7 },
+    { id: 112, number: 112, name_uz: 'Ixlos', name_arabic: 'الإخلاص', ayah_count: 4 },
+    { id: 113, number: 113, name_uz: 'Falaq', name_arabic: 'الفلق', ayah_count: 5 },
+    { id: 114, number: 114, name_uz: 'Nos', name_arabic: 'الناس', ayah_count: 6 },
+    { id: 108, number: 108, name_uz: 'Kavsar', name_arabic: 'الكوثر', ayah_count: 3 }
   ];
 
   // Telegram WebApp Setup
@@ -56,7 +120,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   const telegramId = telegramUser?.id || urlParams.get('tg_id') || 1001;
 
-  // Application State
+  // State
   let state = {
     surahs: [],
     currentSurah: null,
@@ -69,17 +133,15 @@
     recordSeconds: 0
   };
 
-  // DOM Elements - Views
+  // DOM Elements
   const viewSurahs = document.getElementById('viewSurahs');
   const viewPractice = document.getElementById('viewPractice');
 
-  // DOM Elements - Surahs Screen
   const surahSearchInput = document.getElementById('surahSearchInput');
   const surahsListContainer = document.getElementById('surahsListContainer');
   const overallProgressText = document.getElementById('overallProgressText');
   const overallProgressRing = document.getElementById('overallProgressRing');
 
-  // DOM Elements - Practice Screen Header
   const btnClosePractice = document.getElementById('btnClosePractice');
   const practiceProgressBar = document.getElementById('practiceProgressBar');
   const practiceAyahCounter = document.getElementById('practiceAyahCounter');
@@ -87,7 +149,6 @@
   const practiceSurahName = document.getElementById('practiceSurahName');
   const practiceSurahArabic = document.getElementById('practiceSurahArabic');
 
-  // DOM Elements - Ayah Card
   const cardAyahBadge = document.getElementById('cardAyahBadge');
   const btnPlayOfficialAudio = document.getElementById('btnPlayOfficialAudio');
   const playAudioIcon = document.getElementById('playAudioIcon');
@@ -99,7 +160,6 @@
   const liveTranscriptBox = document.getElementById('liveTranscriptBox');
   const liveTranscriptText = document.getElementById('liveTranscriptText');
 
-  // DOM Elements - Evaluation Banner
   const evaluationResultCard = document.getElementById('evaluationResultCard');
   const resultScoreBadge = document.getElementById('resultScoreBadge');
   const resultScorePercent = document.getElementById('resultScorePercent');
@@ -108,7 +168,6 @@
   const btnRetryRecitation = document.getElementById('btnRetryRecitation');
   const btnProceedNextAyah = document.getElementById('btnProceedNextAyah');
 
-  // DOM Elements - Controls
   const controlsIdle = document.getElementById('controlsIdle');
   const controlsRecording = document.getElementById('controlsRecording');
   const btnPrevAyah = document.getElementById('btnPrevAyah');
@@ -118,7 +177,6 @@
   const btnCancelRecord = document.getElementById('btnCancelRecord');
   const recordingTimer = document.getElementById('recordingTimer');
 
-  // DOM Elements - Modals
   const tajweedInfoModal = document.getElementById('tajweedInfoModal');
   const btnCloseInfoModal = document.getElementById('btnCloseInfoModal');
   const wordDetailsModal = document.getElementById('wordDetailsModal');
@@ -127,23 +185,20 @@
   const modalWordStatus = document.getElementById('modalWordStatus');
   const modalWordIssues = document.getElementById('modalWordIssues');
 
-  // Format English verse title (e.g. "Al-Faatiha")
   function formatEnglishName(surah) {
     if (!surah) return '';
     const nameMap = {
-      1: 'Al-Faatiha',
-      2: 'Al-Baqara',
-      3: 'Aal-i-Imraan',
-      4: 'An-Nisaa',
-      5: 'Al-Maaida',
-      6: "Al-An'aam",
-      7: "Al-A'raaf",
-      108: 'Al-Kawthar',
-      112: 'Al-Ikhlaas',
-      113: 'Al-Falaq',
-      114: 'An-Naas'
+      1: 'Fotiha',
+      2: 'Baqara',
+      3: 'Oli Imron',
+      4: 'Niso',
+      5: 'Moida',
+      108: 'Kavsar',
+      112: 'Ixlos',
+      113: 'Falaq',
+      114: 'Nos'
     };
-    return nameMap[surah.number] || surah.name_uz || surah.name_simple || `Surah ${surah.number}`;
+    return nameMap[surah.number] || surah.name_uz || surah.name_english || surah.name_simple || `Sura ${surah.number}`;
   }
 
   async function init() {
@@ -174,14 +229,12 @@
   }
 
   function setupEventListeners() {
-    // Return to Surah List
     btnClosePractice.addEventListener('click', () => {
       stopAudioPlayback();
       if (state.isRecording) cancelRecording();
       showSurahsView();
     });
 
-    // Search filter
     surahSearchInput.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase().trim();
       const filtered = state.surahs.filter((s) => {
@@ -194,20 +247,17 @@
       renderSurahsList(filtered);
     });
 
-    // Info Modal
     btnInfoTajweed.addEventListener('click', () => tajweedInfoModal.classList.remove('hidden'));
     btnCloseInfoModal.addEventListener('click', () => tajweedInfoModal.classList.add('hidden'));
     tajweedInfoModal.addEventListener('click', (e) => {
       if (e.target === tajweedInfoModal) tajweedInfoModal.classList.add('hidden');
     });
 
-    // Word Details Modal
     btnCloseWordModal.addEventListener('click', () => wordDetailsModal.classList.add('hidden'));
     wordDetailsModal.addEventListener('click', (e) => {
       if (e.target === wordDetailsModal) wordDetailsModal.classList.add('hidden');
     });
 
-    // Ayah Navigation
     btnPrevAyah.addEventListener('click', () => {
       if (state.currentAyahIndex > 0) {
         state.currentAyahIndex--;
@@ -222,16 +272,13 @@
       }
     });
 
-    // Official Audio Playback
     btnPlayOfficialAudio.addEventListener('click', toggleOfficialAudio);
     officialAudioElement.addEventListener('ended', onOfficialAudioEnded);
 
-    // Recording Controls
     btnRecord.addEventListener('click', startRecording);
     btnStopRecord.addEventListener('click', finishAndCheckRecitation);
     btnCancelRecord.addEventListener('click', cancelRecording);
 
-    // Evaluation Banner Buttons
     btnRetryRecitation.addEventListener('click', () => {
       evaluationResultCard.classList.add('hidden');
       displayCurrentAyah();
@@ -249,9 +296,6 @@
     });
   }
 
-  // ==========================================
-  // VIEW SWITCHING
-  // ==========================================
   function showSurahsView() {
     viewPractice.classList.add('hidden');
     viewSurahs.classList.remove('hidden');
@@ -264,9 +308,6 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ==========================================
-  // DATA FETCHING & RENDERING
-  // ==========================================
   async function loadSurahs() {
     try {
       const res = await fetch(`${API_BASE}/surahs/?telegram_id=${telegramId}`);
@@ -306,23 +347,18 @@
       card.className = 'flex items-center justify-between p-3.5 bg-white rounded-2xl border border-zinc-100 shadow-sm hover:border-amber-400/80 hover:shadow-md transition-all cursor-pointer transform active:scale-[0.99]';
       
       const enName = formatEnglishName(surah);
-      const verseCount = surah.ayah_count || (surah.number === 1 ? 7 : 4);
+      const verseCount = surah.ayah_count || surah.total_ayahs || (surah.number === 1 ? 7 : 4);
 
       card.innerHTML = `
         <div class="flex items-center gap-3.5">
-          <!-- Circular Number Badge -->
           <div class="surah-num-badge shrink-0">
             ${surah.number}
           </div>
-
-          <!-- Surah Title & Verses -->
           <div>
-            <h3 class="font-bold text-zinc-900 text-[15px] leading-tight">${enName}</h3>
+            <h3 class="font-bold text-zinc-900 text-[15px] leading-tight">${enName} surasi</h3>
             <p class="text-xs text-zinc-400 font-medium mt-0.5">${verseCount} oyat</p>
           </div>
         </div>
-
-        <!-- Arabic Name -->
         <div class="arabic-font text-xl font-bold text-zinc-800 shrink-0">
           ${surah.name_arabic || ''}
         </div>
@@ -343,27 +379,39 @@
     practiceSurahArabic.textContent = surah.name_arabic || '';
 
     showPracticeView();
-    await loadAyahsForSurah(surah.id || surah.number);
+    await loadAyahsForSurah(surah);
   }
 
-  async function loadAyahsForSurah(surahId) {
+  async function loadAyahsForSurah(surah) {
+    const surahNum = surah.number || surah.id || 1;
     quranTextContainer.innerHTML = '<span class="text-zinc-400 text-sm font-sans animate-pulse">Oyatlar yuklanmoqda...</span>';
     translitContainer.textContent = '...';
     translationContainer.textContent = '...';
 
     try {
-      const res = await fetch(`${API_BASE}/surahs/${surahId}/ayahs/?telegram_id=${telegramId}`);
+      const res = await fetch(`${API_BASE}/surahs/${surahNum}/ayahs/?telegram_id=${telegramId}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      state.ayahs = data;
 
-      if (state.ayahs && state.ayahs.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
+        state.ayahs = data;
+      } else {
+        state.ayahs = surahNum === 1 ? DEFAULT_FATIHA_AYAHS : [];
+      }
+
+      if (state.ayahs.length > 0) {
         displayCurrentAyah();
       } else {
         quranTextContainer.textContent = "Oyat ma'lumotlari topilmadi.";
       }
     } catch (e) {
-      quranTextContainer.innerHTML = `<span class="text-red-500 text-xs font-sans">Oyatni yuklab bo'lmadi (${e.message})</span>`;
+      console.warn('Ayah fetch failed, using default:', e);
+      state.ayahs = surahNum === 1 ? DEFAULT_FATIHA_AYAHS : [];
+      if (state.ayahs.length > 0) {
+        displayCurrentAyah();
+      } else {
+        quranTextContainer.innerHTML = `<span class="text-red-500 text-xs font-sans">Oyatni yuklab bo'lmadi (${e.message})</span>`;
+      }
     }
   }
 
@@ -374,45 +422,46 @@
     const ayah = state.ayahs[state.currentAyahIndex];
     if (!ayah) return;
 
-    // Reset Evaluation Banner
     evaluationResultCard.classList.add('hidden');
     liveTranscriptBox.classList.add('hidden');
     showIdleControls();
 
-    // Update Counter & Progress
     const totalAyahs = state.ayahs.length;
     const currentNum = state.currentAyahIndex + 1;
+    const ayahNum = ayah.ayah_number || ayah.number_in_surah || currentNum;
+
     practiceAyahCounter.textContent = `${currentNum}/${totalAyahs}`;
-    cardAyahBadge.textContent = `${ayah.ayah_number}-oyat`;
+    cardAyahBadge.textContent = `${ayahNum}-oyat`;
 
     const progressPercent = Math.round((currentNum / totalAyahs) * 100);
     practiceProgressBar.style.width = `${progressPercent}%`;
 
-    // Render Quran Text with Uthmanic font
+    // Render Quran Text with Uthmanic font and Harakat
+    const arabicText = ayah.text_arabic_tajweed || ayah.text_arabic_clean || '';
     if (window.TajweedHighlighter) {
       window.TajweedHighlighter.renderDefaultAyah(
-        ayah.text_arabic_tajweed || ayah.text_arabic_clean,
+        arabicText,
         quranTextContainer,
-        ayah.ayah_number
+        ayahNum
       );
     } else {
-      quranTextContainer.textContent = ayah.text_arabic_clean || ayah.text_arabic_tajweed;
+      quranTextContainer.textContent = arabicText;
     }
 
     // Transliteration & Translation
-    translitContainer.textContent = ayah.transliteration || "O'qilishi mavjud emas";
-    translationContainer.textContent = ayah.translation_uz || ayah.translation_en || "Tarjima mavjud emas";
+    translitContainer.textContent = ayah.transliteration || ayah.text_translit || "Bismillahir Rohmanir Rohiym";
+    translationContainer.textContent = ayah.translation_uz || ayah.text_translation_uz || ayah.translation_en || "Mehribon va rahmli Allohning nomi ila boshlayman.";
 
     // Setup Official Audio
-    if (ayah.audio_url) {
-      officialAudioElement.src = ayah.audio_url;
+    const audioSrc = ayah.audio_url || ayah.official_audio_url;
+    if (audioSrc) {
+      officialAudioElement.src = audioSrc;
       btnPlayOfficialAudio.classList.remove('opacity-50', 'pointer-events-none');
     } else {
       officialAudioElement.removeAttribute('src');
       btnPlayOfficialAudio.classList.add('opacity-50', 'pointer-events-none');
     }
 
-    // Prev / Next button states
     btnPrevAyah.classList.toggle('opacity-30', state.currentAyahIndex === 0);
     btnPrevAyah.classList.toggle('pointer-events-none', state.currentAyahIndex === 0);
 
@@ -420,9 +469,6 @@
     btnNextAyah.classList.toggle('pointer-events-none', state.currentAyahIndex === totalAyahs - 1);
   }
 
-  // ==========================================
-  // OFFICIAL AUDIO PLAYBACK
-  // ==========================================
   function toggleOfficialAudio() {
     if (state.isPlayingAudio) {
       stopAudioPlayback();
@@ -455,9 +501,6 @@
     btnPlayOfficialAudio.classList.remove('ring-2', 'ring-amber-400');
   }
 
-  // ==========================================
-  // RECORDING & EVALUATION
-  // ==========================================
   async function startRecording() {
     stopAudioPlayback();
     evaluationResultCard.classList.add('hidden');
@@ -522,7 +565,6 @@
 
     state.isRecording = false;
 
-    // Send to backend for verification
     await submitRecitationForCheck(audioBlob, spokenText);
   }
 
@@ -530,11 +572,11 @@
     const ayah = state.ayahs[state.currentAyahIndex];
     if (!ayah) return;
 
-    // Visual loading state
     quranTextContainer.innerHTML = '<span class="text-amber-600 text-sm font-sans animate-pulse">Tilovat tekshirilmoqda...</span>';
 
     const formData = new FormData();
-    formData.append('ayah_id', ayah.id);
+    const ayahId = ayah.id || ayah.number_in_surah || (state.currentAyahIndex + 1);
+    formData.append('ayah_id', ayahId);
     formData.append('telegram_id', telegramId);
 
     if (spokenText) {
@@ -545,7 +587,8 @@
     }
 
     try {
-      const res = await fetch(`${API_BASE}/recitations/check/`, {
+      // Use resilient check endpoint
+      const res = await fetch(`${API_BASE}/recitation/check/`, {
         method: 'POST',
         body: formData
       });
@@ -562,17 +605,15 @@
   function renderEvaluationResult(result, ayah) {
     const score = Math.round(result.score || 0);
 
-    // 1. Highlight Words in Quran Text Card
     if (result.aligned_words && window.TajweedHighlighter) {
       window.TajweedHighlighter.renderWords(
         result.aligned_words,
         quranTextContainer,
         (wordData) => openWordModal(wordData),
-        ayah.ayah_number
+        ayah.ayah_number || ayah.number_in_surah || 1
       );
     }
 
-    // 2. Render Score and Feedback Banner
     resultScorePercent.textContent = `${score}%`;
     evaluationResultCard.classList.remove('hidden');
 
@@ -598,7 +639,6 @@
 
     resultFeedbackText.textContent = result.feedback || "Tilovat natijalari tayyor bo'ldi.";
 
-    // Update Overall Progress Ring if score is good
     if (score >= 70 && overallProgressRing && overallProgressText) {
       const completed = state.currentAyahIndex + 1;
       const pct = Math.round((completed / state.ayahs.length) * 100);
@@ -649,6 +689,5 @@
     controlsRecording.classList.remove('hidden');
   }
 
-  // Boot on DOM ready
   document.addEventListener('DOMContentLoaded', init);
 })();

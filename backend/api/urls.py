@@ -10,6 +10,7 @@ urlpatterns = [
     path('surahs/<int:number>/ayahs/', AyahListView.as_view(), name='ayah-list'),
     path('ayahs/<int:id>/', AyahDetailView.as_view(), name='ayah-detail'),
     path('recitation/check/', RecitationCheckView.as_view(), name='recitation-check'),
+    path('recitations/check/', RecitationCheckView.as_view(), name='recitations-check'),
     path('user/register/', UserRegisterView.as_view(), name='user-register'),
     path('user/progress/', UserProgressView.as_view(), name='user-progress'),
 ]

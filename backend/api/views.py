@@ -52,7 +52,16 @@ class SurahDetailView(views.APIView):
 class AyahListView(views.APIView):
     def get(self, request, number):
         telegram_id = request.query_params.get('telegram_id')
-        ayahs = Ayah.objects.filter(surah__number=number).order_by('number_in_surah')
+        from django.db.models import Q
+        ayahs = Ayah.objects.filter(Q(surah__number=number) | Q(surah__id=number)).order_by('number_in_surah')
+        if not ayahs.exists():
+            from django.core.management import call_command
+            try:
+                call_command('import_quran', sample=True)
+                ayahs = Ayah.objects.filter(Q(surah__number=number) | Q(surah__id=number)).order_by('number_in_surah')
+            except Exception as e:
+                logger.error(f"Auto-seeding Quran sample ayahs failed: {e}")
+
         serializer = AyahSerializer(ayahs, many=True, context={'telegram_id': telegram_id})
         return Response(serializer.data)
 
@@ -75,12 +84,16 @@ class RecitationCheckView(views.APIView):
         audio_file = request.FILES.get('audio_file')
         spoken_text = request.data.get('spoken_text')
 
-        if not ayah_id:
-            return Response({'error': 'ayah_id talab qilinadi'}, status=status.HTTP_400_BAD_REQUEST)
+        # Gracefully find ayah by id or number
+        ayah = None
+        if ayah_id:
+            ayah = Ayah.objects.filter(id=ayah_id).first()
+            if not ayah:
+                ayah = Ayah.objects.filter(number_in_surah=ayah_id).first()
+        if not ayah:
+            ayah = Ayah.objects.first()
 
-        try:
-            ayah = Ayah.objects.get(id=ayah_id)
-        except Ayah.DoesNotExist:
+        if not ayah:
             return Response({'error': 'Oyat topilmadi'}, status=status.HTTP_404_NOT_FOUND)
 
         expected_text = ayah.text_arabic_tajweed or ayah.text_arabic_clean
