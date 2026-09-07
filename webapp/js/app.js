@@ -1,5 +1,5 @@
 /**
- * Master Application Controller for Iqra Quran Tutor
+ * Master Application Controller for Learn Quran (Iqra Tutor)
  */
 (function () {
   const API_BASE = window.location.origin.includes(':8000') || window.location.origin.includes(':5173')
@@ -18,7 +18,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   const telegramId = telegramUser?.id || urlParams.get('tg_id') || 1001;
 
-  // State
+  // Application State
   let state = {
     surahs: [],
     currentSurah: null,
@@ -27,84 +27,87 @@
     isRecording: false,
     audioRecorder: null,
     isPlayingAudio: false,
-    fontSizeRem: 2.2,
-    showTranslit: true,
-    showTranslation: true
+    timerInterval: null,
+    recordSeconds: 0
   };
 
-  // DOM Elements
-  const headerSurahName = document.getElementById('headerSurahName');
-  const surahArabicTitle = document.getElementById('surahArabicTitle');
-  const currentSurahPlace = document.getElementById('currentSurahPlace');
-  const currentAyahIndicator = document.getElementById('currentAyahIndicator');
+  // DOM Elements - Views
+  const viewSurahs = document.getElementById('viewSurahs');
+  const viewPractice = document.getElementById('viewPractice');
+
+  // DOM Elements - Surahs Screen
+  const surahSearchInput = document.getElementById('surahSearchInput');
+  const surahsListContainer = document.getElementById('surahsListContainer');
+  const overallProgressText = document.getElementById('overallProgressText');
+  const overallProgressRing = document.getElementById('overallProgressRing');
+
+  // DOM Elements - Practice Screen Header
+  const btnClosePractice = document.getElementById('btnClosePractice');
+  const practiceProgressBar = document.getElementById('practiceProgressBar');
+  const practiceAyahCounter = document.getElementById('practiceAyahCounter');
+  const btnInfoTajweed = document.getElementById('btnInfoTajweed');
+  const practiceSurahName = document.getElementById('practiceSurahName');
+  const practiceSurahArabic = document.getElementById('practiceSurahArabic');
+
+  // DOM Elements - Ayah Card
+  const cardAyahBadge = document.getElementById('cardAyahBadge');
+  const btnPlayOfficialAudio = document.getElementById('btnPlayOfficialAudio');
+  const playAudioIcon = document.getElementById('playAudioIcon');
+  const audioPlayingAnimation = document.getElementById('audioPlayingAnimation');
+  const officialAudioElement = document.getElementById('officialAudioElement');
   const quranTextContainer = document.getElementById('quranTextContainer');
   const translitContainer = document.getElementById('translitContainer');
   const translationContainer = document.getElementById('translationContainer');
-
-  const btnPrevAyah = document.getElementById('btnPrevAyah');
-  const btnNextAyah = document.getElementById('btnNextAyah');
-
-  // View toggles & font size
-  const btnToggleTranslit = document.getElementById('btnToggleTranslit');
-  const btnToggleTrans = document.getElementById('btnToggleTrans');
-  const btnFontMinus = document.getElementById('btnFontMinus');
-  const btnFontPlus = document.getElementById('btnFontPlus');
-
-  // Official Audio
-  const btnPlayOfficialAudio = document.getElementById('btnPlayOfficialAudio');
-  const playAudioIcon = document.getElementById('playAudioIcon');
-  const audioPlayingWave = document.getElementById('audioPlayingWave');
-  const officialAudioElement = document.getElementById('officialAudioElement');
-  const audioCurrentTime = document.getElementById('audioCurrentTime');
-  const audioTotalDuration = document.getElementById('audioTotalDuration');
-  const audioTimeline = document.getElementById('audioTimeline');
-
-  // Record Studio
-  const btnRecord = document.getElementById('btnRecord');
-  const micIcon = document.getElementById('micIcon');
-  const stopIcon = document.getElementById('stopIcon');
-  const recordPulseRing = document.getElementById('recordPulseRing');
-  const recStatusLabel = document.getElementById('recStatusLabel');
-  const statusIndicatorDot = document.getElementById('statusIndicatorDot');
-  const recStatusPill = document.getElementById('recStatusPill');
-  const recordingTimer = document.getElementById('recordingTimer');
-  const visualizerContainer = document.getElementById('visualizerContainer');
-  const audioVisualizerCanvas = document.getElementById('audioVisualizerCanvas');
   const liveTranscriptBox = document.getElementById('liveTranscriptBox');
   const liveTranscriptText = document.getElementById('liveTranscriptText');
 
-  // Evaluation & Results
+  // DOM Elements - Evaluation Banner
   const evaluationResultCard = document.getElementById('evaluationResultCard');
-  const resultScorePercent = document.getElementById('resultScorePercent');
   const resultScoreBadge = document.getElementById('resultScoreBadge');
-  const scoreCirclePath = document.getElementById('scoreCirclePath');
-  const statCorrectWords = document.getElementById('statCorrectWords');
-  const statTajweedIssues = document.getElementById('statTajweedIssues');
-  const statIncorrectWords = document.getElementById('statIncorrectWords');
+  const resultScorePercent = document.getElementById('resultScorePercent');
+  const resultFeedbackTitle = document.getElementById('resultFeedbackTitle');
   const resultFeedbackText = document.getElementById('resultFeedbackText');
-  const evaluatedWordsContainer = document.getElementById('evaluatedWordsContainer');
   const btnRetryRecitation = document.getElementById('btnRetryRecitation');
   const btnProceedNextAyah = document.getElementById('btnProceedNextAyah');
 
-  // Modals
-  const btnOpenSurahs = document.getElementById('btnOpenSurahs');
-  const surahsModal = document.getElementById('surahsModal');
-  const btnCloseSurahsModal = document.getElementById('btnCloseSurahsModal');
-  const surahSearchInput = document.getElementById('surahSearchInput');
-  const surahsListContainer = document.getElementById('surahsListContainer');
+  // DOM Elements - Controls
+  const controlsIdle = document.getElementById('controlsIdle');
+  const controlsRecording = document.getElementById('controlsRecording');
+  const btnPrevAyah = document.getElementById('btnPrevAyah');
+  const btnNextAyah = document.getElementById('btnNextAyah');
+  const btnRecord = document.getElementById('btnRecord');
+  const btnStopRecord = document.getElementById('btnStopRecord');
+  const btnCancelRecord = document.getElementById('btnCancelRecord');
+  const recordingTimer = document.getElementById('recordingTimer');
 
+  // DOM Elements - Modals & Tabs
+  const tajweedInfoModal = document.getElementById('tajweedInfoModal');
+  const btnCloseInfoModal = document.getElementById('btnCloseInfoModal');
   const wordDetailsModal = document.getElementById('wordDetailsModal');
   const btnCloseWordModal = document.getElementById('btnCloseWordModal');
   const modalArabicWord = document.getElementById('modalArabicWord');
   const modalWordStatus = document.getElementById('modalWordStatus');
   const modalWordIssues = document.getElementById('modalWordIssues');
+  const navTabJourney = document.getElementById('navTabJourney');
+  const navTabQuran = document.getElementById('navTabQuran');
 
-  // Format MM:SS helper
-  function formatTime(seconds) {
-    if (isNaN(seconds) || seconds < 0) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  // Format English verse title (e.g. "Al-Faatiha")
+  function formatEnglishName(surah) {
+    if (!surah) return '';
+    const nameMap = {
+      1: 'Al-Faatiha',
+      2: 'Al-Baqara',
+      3: 'Aal-i-Imraan',
+      4: 'An-Nisaa',
+      5: 'Al-Maaida',
+      6: "Al-An'aam",
+      7: "Al-A'raaf",
+      108: 'Al-Kawthar',
+      112: 'Al-Ikhlaas',
+      113: 'Al-Falaq',
+      114: 'An-Naas'
+    };
+    return nameMap[surah.number] || surah.name_simple || surah.name_uz || `Surah ${surah.number}`;
   }
 
   async function init() {
@@ -114,17 +117,14 @@
   }
 
   function setupAudioRecorder() {
+    if (!window.QuranAudioRecorder) return;
+    
     state.audioRecorder = new window.QuranAudioRecorder({
-      canvas: audioVisualizerCanvas,
       onStateChange: (recState) => {
-        if (recState.status === 'recording') {
-          recordingTimer.classList.remove('hidden');
-          recordingTimer.textContent = formatTime(recState.duration);
-        } else if (recState.status === 'idle') {
-          recordingTimer.classList.add('hidden');
-        } else if (recState.status === 'error') {
+        if (recState.status === 'error') {
           alert(`Ovoz yozishda xatolik: ${recState.error}`);
-          resetRecordButton();
+          stopRecordingTimer();
+          showIdleControls();
         }
       }
     });
@@ -138,25 +138,58 @@
   }
 
   function setupEventListeners() {
-    // Sura Selector
-    btnOpenSurahs.addEventListener('click', () => {
-      surahsModal.classList.remove('hidden');
-      renderSurahsList(state.surahs);
+    // View switching via Close Button
+    btnClosePractice.addEventListener('click', () => {
+      stopAudioPlayback();
+      if (state.isRecording) cancelRecording();
+      showSurahsView();
     });
-    btnCloseSurahsModal.addEventListener('click', () => surahsModal.classList.add('hidden'));
 
+    // Bottom Navigation Tabs
+    if (navTabJourney) {
+      navTabJourney.addEventListener('click', () => {
+        stopAudioPlayback();
+        showSurahsView();
+      });
+    }
+
+    if (navTabQuran) {
+      navTabQuran.addEventListener('click', () => {
+        if (state.currentSurah) {
+          showPracticeView();
+        } else if (state.surahs.length > 0) {
+          selectSurah(state.surahs[0]);
+        }
+      });
+    }
+
+    // Search filter
     surahSearchInput.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase().trim();
-      const filtered = state.surahs.filter(
-        (s) => s.name_uz.toLowerCase().includes(q) || s.name_arabic.includes(q) || s.number.toString() === q
-      );
+      const filtered = state.surahs.filter((s) => {
+        const enName = formatEnglishName(s).toLowerCase();
+        const uzName = (s.name_uz || '').toLowerCase();
+        const arName = (s.name_arabic || '');
+        const numStr = s.number.toString();
+        return enName.includes(q) || uzName.includes(q) || arName.includes(q) || numStr === q;
+      });
       renderSurahsList(filtered);
     });
 
-    // Word modal
-    btnCloseWordModal.addEventListener('click', () => wordDetailsModal.classList.add('hidden'));
+    // Info Modal
+    btnInfoTajweed.addEventListener('click', () => tajweedInfoModal.classList.remove('hidden'));
+    btnCloseInfoModal.addEventListener('click', () => tajweedInfoModal.classList.add('hidden'));
+    tajweedInfoModal.addEventListener('click', (e) => {
+      if (e.target === tajweedInfoModal) tajweedInfoModal.classList.add('hidden');
+    });
 
-    // Ayah navigation
+    // Word Details Modal
+    btnCloseWordModal.addEventListener('click', () => wordDetailsModal.classList.add('hidden'));
+    wordDetailsModal.addEventListener('click', (e) => {
+      if (e.target === wordDetailsModal) wordDetailsModal.classList.add('hidden');
+    });
+
+    // Ayah Navigation
     btnPrevAyah.addEventListener('click', () => {
       if (state.currentAyahIndex > 0) {
         state.currentAyahIndex--;
@@ -171,360 +204,444 @@
       }
     });
 
-    // Font size controls
-    btnFontPlus.addEventListener('click', () => {
-      if (state.fontSizeRem < 3.8) {
-        state.fontSizeRem += 0.25;
-        quranTextContainer.style.fontSize = `${state.fontSizeRem}rem`;
-      }
-    });
-
-    btnFontMinus.addEventListener('click', () => {
-      if (state.fontSizeRem > 1.6) {
-        state.fontSizeRem -= 0.25;
-        quranTextContainer.style.fontSize = `${state.fontSizeRem}rem`;
-      }
-    });
-
-    // Transliteration & Translation toggles
-    btnToggleTranslit.addEventListener('click', () => {
-      state.showTranslit = !state.showTranslit;
-      translitContainer.style.display = state.showTranslit ? 'block' : 'none';
-      btnToggleTranslit.classList.toggle('opacity-50', !state.showTranslit);
-    });
-
-    btnToggleTrans.addEventListener('click', () => {
-      state.showTranslation = !state.showTranslation;
-      translationContainer.style.display = state.showTranslation ? 'block' : 'none';
-      btnToggleTrans.classList.toggle('opacity-50', !state.showTranslation);
-    });
-
-    // Official Audio Playback & Timeline
+    // Official Audio Playback
     btnPlayOfficialAudio.addEventListener('click', toggleOfficialAudio);
+    officialAudioElement.addEventListener('ended', onOfficialAudioEnded);
 
-    officialAudioElement.addEventListener('timeupdate', () => {
-      const current = officialAudioElement.currentTime;
-      const total = officialAudioElement.duration || 1;
-      audioCurrentTime.textContent = formatTime(current);
-      audioTotalDuration.textContent = formatTime(total);
-      audioTimeline.value = (current / total) * 100;
-    });
+    // Recording Controls
+    btnRecord.addEventListener('click', startRecording);
+    btnStopRecord.addEventListener('click', finishAndCheckRecitation);
+    btnCancelRecord.addEventListener('click', cancelRecording);
 
-    audioTimeline.addEventListener('input', (e) => {
-      const total = officialAudioElement.duration || 1;
-      officialAudioElement.currentTime = (e.target.value / 100) * total;
-    });
-
-    officialAudioElement.addEventListener('ended', () => {
-      stopOfficialAudio();
-    });
-
-    // Record toggle
-    btnRecord.addEventListener('click', toggleRecording);
-
-    // Results Actions
+    // Evaluation Banner Buttons
     btnRetryRecitation.addEventListener('click', () => {
       evaluationResultCard.classList.add('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      displayCurrentAyah();
     });
 
     btnProceedNextAyah.addEventListener('click', () => {
+      evaluationResultCard.classList.add('hidden');
       if (state.currentAyahIndex < state.ayahs.length - 1) {
         state.currentAyahIndex++;
         displayCurrentAyah();
-        evaluationResultCard.classList.add('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        alert("Mashalloh! Siz mazkur suraning barcha oyatlarini muvaffaqiyatli yakunladingiz!");
+        alert('Tabriklaymiz! Siz ushbu suraning barcha oyatlarini yakunladingiz!');
+        showSurahsView();
       }
     });
   }
 
+  // ==========================================
+  // VIEW SWITCHING
+  // ==========================================
+  function showSurahsView() {
+    viewPractice.classList.add('hidden');
+    viewSurahs.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (navTabJourney && navTabQuran) {
+      navTabJourney.classList.add('text-[#D97706]', 'font-extrabold');
+      navTabJourney.classList.remove('text-zinc-400');
+      navTabQuran.classList.remove('text-[#D97706]', 'font-extrabold');
+      navTabQuran.classList.add('text-zinc-400');
+    }
+  }
+
+  function showPracticeView() {
+    viewSurahs.classList.add('hidden');
+    viewPractice.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (navTabJourney && navTabQuran) {
+      navTabQuran.classList.add('text-[#D97706]', 'font-extrabold');
+      navTabQuran.classList.remove('text-zinc-400');
+      navTabJourney.classList.remove('text-[#D97706]', 'font-extrabold');
+      navTabJourney.classList.add('text-zinc-400');
+    }
+  }
+
+  // ==========================================
+  // DATA FETCHING & RENDERING
+  // ==========================================
   async function loadSurahs() {
     try {
       const res = await fetch(`${API_BASE}/surahs/?telegram_id=${telegramId}`);
-      if (!res.ok) throw new Error('Suralarni yuklashda xatolik');
-      state.surahs = await res.json();
+      if (!res.ok) throw new Error('Suralarni yuklab boʻlmadi');
+      const data = await res.json();
+      state.surahs = data;
+      renderSurahsList(state.surahs);
 
-      if (state.surahs.length > 0) {
-        selectSurah(state.surahs[0]);
+      // Select first surah by default
+      if (state.surahs.length > 0 && !state.currentSurah) {
+        state.currentSurah = state.surahs[0];
       }
-    } catch (err) {
-      console.error(err);
-      headerSurahName.textContent = "Ulanishda xatolik";
+    } catch (e) {
+      surahsListContainer.innerHTML = `
+        <div class="p-4 bg-red-50 text-red-700 text-xs rounded-2xl border border-red-200 text-center">
+          Tarmoq xatosi: ${e.message}. Iltimos, qayta urinib ko'ring.
+        </div>`;
     }
+  }
+
+  function renderSurahsList(surahs) {
+    if (!surahs || surahs.length === 0) {
+      surahsListContainer.innerHTML = `
+        <div class="py-12 text-center text-zinc-400 text-xs">
+          Hech qanday sura topilmadi
+        </div>`;
+      return;
+    }
+
+    surahsListContainer.innerHTML = '';
+
+    surahs.forEach((surah) => {
+      const card = document.createElement('div');
+      card.className = 'flex items-center justify-between p-3.5 bg-white rounded-2xl border border-zinc-100 shadow-sm hover:border-amber-400/80 hover:shadow-md transition-all cursor-pointer transform active:scale-[0.99]';
+      
+      const enName = formatEnglishName(surah);
+      const verseCount = surah.ayah_count || (surah.number === 1 ? 7 : 10);
+
+      card.innerHTML = `
+        <div class="flex items-center gap-3.5">
+          <!-- Circular Number Badge with dot -->
+          <div class="surah-num-badge shrink-0">
+            ${surah.number}
+          </div>
+
+          <!-- Surah Title & Verses -->
+          <div>
+            <h3 class="font-bold text-zinc-900 text-[15px] leading-tight">${enName}</h3>
+            <p class="text-xs text-zinc-400 font-medium mt-0.5">${verseCount} verses</p>
+          </div>
+        </div>
+
+        <!-- Arabic Name -->
+        <div class="arabic-font text-xl font-bold text-zinc-800 shrink-0">
+          ${surah.name_arabic || ''}
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        selectSurah(surah);
+      });
+
+      surahsListContainer.appendChild(card);
+    });
   }
 
   async function selectSurah(surah) {
     state.currentSurah = surah;
     state.currentAyahIndex = 0;
-    headerSurahName.textContent = `${surah.number}. ${surah.name_uz}`;
-    surahArabicTitle.textContent = `سورة ${surah.name_arabic}`;
-    currentSurahPlace.textContent = surah.revelation_place === 'makkah' ? 'Makka' : 'Madina';
-    surahsModal.classList.add('hidden');
+    practiceSurahName.textContent = formatEnglishName(surah);
+    practiceSurahArabic.textContent = surah.name_arabic || '';
+
+    showPracticeView();
+    await loadAyahsForSurah(surah.id);
+  }
+
+  async function loadAyahsForSurah(surahId) {
+    quranTextContainer.innerHTML = '<span class="text-zinc-400 text-sm font-sans animate-pulse">Oyatlar yuklanmoqda...</span>';
+    translitContainer.textContent = '...';
+    translationContainer.textContent = '...';
 
     try {
-      const res = await fetch(`${API_BASE}/surahs/${surah.number}/ayahs/?telegram_id=${telegramId}`);
-      if (!res.ok) throw new Error('Oyatlarni yuklashda xatolik');
-      state.ayahs = await res.json();
-      displayCurrentAyah();
-    } catch (err) {
-      console.error(err);
+      const res = await fetch(`${API_BASE}/surahs/${surahId}/ayahs/?telegram_id=${telegramId}`);
+      if (!res.ok) throw new Error('Oyatlar yuklanmadi');
+      const data = await res.json();
+      state.ayahs = data;
+
+      if (state.ayahs.length > 0) {
+        displayCurrentAyah();
+      } else {
+        quranTextContainer.textContent = "Ushbu surada oyat ma'lumotlari topilmadi.";
+      }
+    } catch (e) {
+      quranTextContainer.innerHTML = `<span class="text-red-500 text-xs font-sans">Xatolik: ${e.message}</span>`;
     }
   }
 
   function displayCurrentAyah() {
-    if (!state.ayahs.length) return;
+    stopAudioPlayback();
+    if (state.isRecording) cancelRecording();
 
     const ayah = state.ayahs[state.currentAyahIndex];
-    currentAyahIndicator.textContent = `${ayah.number_in_surah} / ${state.ayahs.length} Oyat`;
+    if (!ayah) return;
 
-    btnPrevAyah.disabled = (state.currentAyahIndex === 0);
-    btnNextAyah.disabled = (state.currentAyahIndex === state.ayahs.length - 1);
+    // Reset Evaluation Banner
+    evaluationResultCard.classList.add('hidden');
+    liveTranscriptBox.classList.add('hidden');
+    showIdleControls();
 
-    // Render Clean/Tajweed Arabic text with Ayah end symbol
-    window.TajweedHighlighter.renderDefaultAyah(
-      ayah.text_arabic_tajweed || ayah.text_arabic_clean,
-      quranTextContainer,
-      ayah.number_in_surah
-    );
+    // Update Counter & Progress
+    const totalAyahs = state.ayahs.length;
+    const currentNum = state.currentAyahIndex + 1;
+    practiceAyahCounter.textContent = `${currentNum}/${totalAyahs}`;
+    cardAyahBadge.textContent = `Ayah: ${ayah.ayah_number}`;
+
+    const progressPercent = Math.round((currentNum / totalAyahs) * 100);
+    practiceProgressBar.style.width = `${progressPercent}%`;
+
+    // Render Quran Text with Uthmanic font
+    if (window.TajweedHighlighter) {
+      window.TajweedHighlighter.renderDefaultAyah(
+        ayah.text_arabic_tajweed || ayah.text_arabic_clean,
+        quranTextContainer,
+        ayah.ayah_number
+      );
+    } else {
+      quranTextContainer.textContent = ayah.text_arabic_clean || ayah.text_arabic_tajweed;
+    }
 
     // Transliteration & Translation
-    translitContainer.textContent = ayah.text_translit || "—";
-    translationContainer.textContent = ayah.text_translation_uz || "—";
+    translitContainer.textContent = ayah.transliteration || 'Transliteratsiya mavjud emas';
+    translationContainer.textContent = ayah.translation_uz || ayah.translation_en || "Tarjima mavjud emas";
 
-    // Audio setup
-    officialAudioElement.src = ayah.official_audio_url || '';
-    stopOfficialAudio();
-
-    // Reset evaluation card
-    evaluationResultCard.classList.add('hidden');
-    if (liveTranscriptBox) liveTranscriptBox.classList.add('hidden');
-  }
-
-  function toggleOfficialAudio() {
-    if (!officialAudioElement.src) {
-      alert("Ushbu oyat uchun audio fayl mavjud emas.");
-      return;
-    }
-
-    if (state.isPlayingAudio) {
-      stopOfficialAudio();
+    // Setup Official Audio
+    if (ayah.audio_url) {
+      officialAudioElement.src = ayah.audio_url;
+      btnPlayOfficialAudio.classList.remove('opacity-50', 'pointer-events-none');
     } else {
-      officialAudioElement.play();
-      state.isPlayingAudio = true;
-      playAudioIcon.textContent = '⏸';
-      audioPlayingWave.classList.remove('hidden');
+      officialAudioElement.removeAttribute('src');
+      btnPlayOfficialAudio.classList.add('opacity-50', 'pointer-events-none');
+    }
+
+    // Prev / Next button states
+    btnPrevAyah.classList.toggle('opacity-30', state.currentAyahIndex === 0);
+    btnPrevAyah.classList.toggle('pointer-events-none', state.currentAyahIndex === 0);
+
+    btnNextAyah.classList.toggle('opacity-30', state.currentAyahIndex === totalAyahs - 1);
+    btnNextAyah.classList.toggle('pointer-events-none', state.currentAyahIndex === totalAyahs - 1);
+  }
+
+  // ==========================================
+  // OFFICIAL AUDIO PLAYBACK
+  // ==========================================
+  function toggleOfficialAudio() {
+    if (state.isPlayingAudio) {
+      stopAudioPlayback();
+    } else {
+      if (!officialAudioElement.src) return;
+      officialAudioElement.play().then(() => {
+        state.isPlayingAudio = true;
+        playAudioIcon.classList.add('hidden');
+        audioPlayingAnimation.classList.remove('hidden');
+        btnPlayOfficialAudio.classList.add('ring-2', 'ring-amber-400');
+      }).catch((err) => {
+        console.warn('Audio play failed:', err);
+      });
     }
   }
 
-  function stopOfficialAudio() {
+  function stopAudioPlayback() {
     officialAudioElement.pause();
     officialAudioElement.currentTime = 0;
     state.isPlayingAudio = false;
-    playAudioIcon.textContent = '▶';
-    audioPlayingWave.classList.add('hidden');
-    audioTimeline.value = 0;
-    audioCurrentTime.textContent = '0:00';
+    playAudioIcon.classList.remove('hidden');
+    audioPlayingAnimation.classList.add('hidden');
+    btnPlayOfficialAudio.classList.remove('ring-2', 'ring-amber-400');
   }
 
-  async function toggleRecording() {
-    if (state.isRecording) {
-      // STOP recording and evaluate
-      state.isRecording = false;
-      resetRecordButton();
-      recStatusLabel.textContent = "Tilovat tahlil qilinmoqda...";
+  function onOfficialAudioEnded() {
+    state.isPlayingAudio = false;
+    playAudioIcon.classList.remove('hidden');
+    audioPlayingAnimation.classList.add('hidden');
+    btnPlayOfficialAudio.classList.remove('ring-2', 'ring-amber-400');
+  }
 
-      const result = await state.audioRecorder.stop();
-      const audioBlob = result?.audioBlob;
-      const spokenText = result?.spokenText || '';
+  // ==========================================
+  // RECORDING & EVALUATION
+  // ==========================================
+  async function startRecording() {
+    stopAudioPlayback();
+    evaluationResultCard.classList.add('hidden');
 
-      await submitRecitation(audioBlob, spokenText);
-    } else {
-      // START recording
-      stopOfficialAudio();
-      if (liveTranscriptBox) liveTranscriptBox.classList.add('hidden');
-      if (liveTranscriptText) liveTranscriptText.textContent = '...';
-
-      try {
+    try {
+      if (state.audioRecorder) {
         await state.audioRecorder.start();
-        state.isRecording = true;
-        micIcon.classList.add('hidden');
-        stopIcon.classList.remove('hidden');
-        recordPulseRing.classList.remove('hidden');
-        visualizerContainer.classList.remove('hidden');
-        btnRecord.classList.add('is-recording');
-
-        recStatusLabel.textContent = "Tilovat yozilmoqda... Tugatish uchun bosing";
-        recStatusPill.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-rose-950/60 border border-rose-500/40 text-rose-300 backdrop-blur-md";
-        statusIndicatorDot.className = "w-2 h-2 rounded-full bg-rose-400 animate-ping";
-      } catch (err) {
-        console.error(err);
       }
+      state.isRecording = true;
+      state.recordSeconds = 0;
+      recordingTimer.textContent = '0s';
+
+      showRecordingControls();
+      startRecordingTimer();
+    } catch (e) {
+      alert(`Mikrofonni yoqib boʻlmadi: ${e.message}`);
+      showIdleControls();
     }
   }
 
-  function resetRecordButton() {
-    state.isRecording = false;
-    micIcon.classList.remove('hidden');
-    stopIcon.classList.add('hidden');
-    recordPulseRing.classList.add('hidden');
-    visualizerContainer.classList.add('hidden');
-    btnRecord.classList.remove('is-recording');
-
-    recStatusLabel.textContent = "Tilovat qilish uchun bosing";
-    recStatusPill.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 backdrop-blur-md";
-    statusIndicatorDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+  function startRecordingTimer() {
+    stopRecordingTimer();
+    state.timerInterval = setInterval(() => {
+      state.recordSeconds++;
+      recordingTimer.textContent = `${state.recordSeconds}s`;
+    }, 1000);
   }
 
-  async function submitRecitation(audioBlob, spokenText = '') {
+  function stopRecordingTimer() {
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+    }
+  }
+
+  function cancelRecording() {
+    stopRecordingTimer();
+    if (state.audioRecorder) {
+      state.audioRecorder.stop();
+    }
+    state.isRecording = false;
+    liveTranscriptBox.classList.add('hidden');
+    showIdleControls();
+  }
+
+  async function finishAndCheckRecitation() {
+    stopRecordingTimer();
+    showIdleControls();
+
+    let audioBlob = null;
+    let spokenText = '';
+
+    if (state.audioRecorder) {
+      try {
+        const recResult = await state.audioRecorder.stop();
+        audioBlob = recResult.audioBlob || recResult.blob;
+        spokenText = recResult.spokenText || state.audioRecorder.transcript || '';
+      } catch (e) {
+        console.warn('Audio stop error:', e);
+      }
+    }
+
+    state.isRecording = false;
+
+    // Send to backend for verification
+    await submitRecitationForCheck(audioBlob, spokenText);
+  }
+
+  async function submitRecitationForCheck(audioBlob, spokenText) {
     const ayah = state.ayahs[state.currentAyahIndex];
     if (!ayah) return;
+
+    // Visual loading state
+    quranTextContainer.innerHTML = '<span class="text-amber-600 text-sm font-sans animate-pulse">Tilovat tekshirilmoqda...</span>';
 
     const formData = new FormData();
     formData.append('ayah_id', ayah.id);
     formData.append('telegram_id', telegramId);
+
+    if (spokenText) {
+      formData.append('spoken_text', spokenText);
+    }
     if (audioBlob) {
       formData.append('audio_file', audioBlob, 'recitation.webm');
     }
-    if (spokenText && spokenText.trim()) {
-      formData.append('spoken_text', spokenText.trim());
-    }
 
     try {
-      const res = await fetch(`${API_BASE}/recitation/check/`, {
+      const res = await fetch(`${API_BASE}/recitations/check/`, {
         method: 'POST',
         body: formData
       });
 
-      if (!res.ok) throw new Error("Tilovatni tekshirishda xatolik yuz berdi");
+      if (!res.ok) throw new Error(`Server xatosi (${res.status})`);
       const result = await res.json();
-      displayEvaluationResult(result, ayah.number_in_surah);
-    } catch (err) {
-      alert(`Xatolik: ${err.message}`);
-      recStatusLabel.textContent = "Qaytadan urinib ko'ring";
+      renderEvaluationResult(result, ayah);
+    } catch (e) {
+      displayCurrentAyah();
+      alert(`Tekshirishda xatolik yuz berdi: ${e.message}`);
     }
   }
 
-  function displayEvaluationResult(result, ayahNumber = 1) {
+  function renderEvaluationResult(result, ayah) {
+    const score = Math.round(result.score || 0);
+
+    // 1. Highlight Words in Quran Text Card
+    if (result.aligned_words && window.TajweedHighlighter) {
+      window.TajweedHighlighter.renderWords(
+        result.aligned_words,
+        quranTextContainer,
+        (wordData) => openWordModal(wordData),
+        ayah.ayah_number
+      );
+    }
+
+    // 2. Render Score and Feedback Banner
+    resultScorePercent.textContent = `${score}%`;
     evaluationResultCard.classList.remove('hidden');
-    resultScorePercent.textContent = `${result.score}%`;
 
-    // Animate circular SVG stroke
-    if (scoreCirclePath) {
-      scoreCirclePath.setAttribute('stroke-dasharray', `${result.score}, 100`);
-      if (result.score >= 85) {
-        scoreCirclePath.setAttribute('class', 'text-emerald-400 transition-all duration-1000');
-      } else if (result.score >= 70) {
-        scoreCirclePath.setAttribute('class', 'text-amber-400 transition-all duration-1000');
-      } else {
-        scoreCirclePath.setAttribute('class', 'text-rose-400 transition-all duration-1000');
-      }
-    }
-
-    // Badge styling
-    if (result.score >= 85) {
-      resultScoreBadge.textContent = "A'lo";
-      resultScoreBadge.className = "text-xs font-bold px-3 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm";
+    if (score >= 85) {
+      resultScoreBadge.className = 'px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-100 text-emerald-700';
+      resultFeedbackTitle.textContent = "Mashalloh! A'lo tilovat!";
+      resultFeedbackTitle.className = 'text-xs font-bold text-emerald-700';
+      evaluationResultCard.className = 'app-card p-4 mb-4 border-l-4 border-emerald-500 transition-all';
       if (window.confetti) {
-        window.confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+        window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
       }
-    } else if (result.score >= 70) {
-      resultScoreBadge.textContent = "Yaxshi";
-      resultScoreBadge.className = "text-xs font-bold px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm";
+    } else if (score >= 60) {
+      resultScoreBadge.className = 'px-2.5 py-1 rounded-xl text-xs font-extrabold bg-amber-100 text-amber-700';
+      resultFeedbackTitle.textContent = "Yaxshi, tajvidga e'tibor bering";
+      resultFeedbackTitle.className = 'text-xs font-bold text-amber-700';
+      evaluationResultCard.className = 'app-card p-4 mb-4 border-l-4 border-amber-500 transition-all';
     } else {
-      resultScoreBadge.textContent = "Qayta o'qing";
-      resultScoreBadge.className = "text-xs font-bold px-3 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-sm";
+      resultScoreBadge.className = 'px-2.5 py-1 rounded-xl text-xs font-extrabold bg-red-100 text-red-700';
+      resultFeedbackTitle.textContent = "Qayta o'qib ko'ring";
+      resultFeedbackTitle.className = 'text-xs font-bold text-red-700';
+      evaluationResultCard.className = 'app-card p-4 mb-4 border-l-4 border-red-500 transition-all';
     }
 
-    statCorrectWords.textContent = result.correct_count || 0;
-    statTajweedIssues.textContent = result.tajweed_issue_count || 0;
-    statIncorrectWords.textContent = result.incorrect_count || 0;
-    resultFeedbackText.textContent = result.overall_feedback || "Tilovat baholandi.";
+    resultFeedbackText.textContent = result.feedback || "Tilovat natijalari tayyor bo'ldi.";
 
-    // Render word pills with ayah end marker
-    window.TajweedHighlighter.renderWords(
-      result.word_results || [],
-      evaluatedWordsContainer,
-      (wordItem) => openWordModal(wordItem),
-      ayahNumber
-    );
-
-    evaluationResultCard.scrollIntoView({ behavior: 'smooth' });
+    // Update Overall Progress Ring if score is good
+    if (score >= 70 && overallProgressRing && overallProgressText) {
+      const completed = state.currentAyahIndex + 1;
+      const pct = Math.round((completed / state.ayahs.length) * 100);
+      overallProgressText.textContent = `${pct}%`;
+      overallProgressRing.setAttribute('stroke-dasharray', `${pct}, 100`);
+    }
   }
 
-  function openWordModal(item) {
-    modalArabicWord.textContent = item.word;
-
-    let statusText = "To'g'ri o'qildi";
-    let statusClass = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
-
-    if (item.status === 'tajweed_issue') {
-      statusText = "Tajvid Kamchiligi";
-      statusClass = "bg-amber-500/20 text-amber-300 border border-amber-500/40";
-    } else if (item.status === 'incorrect' || item.status === 'missing') {
-      statusText = "Xato yoki Tushirilgan";
-      statusClass = "bg-rose-500/20 text-rose-300 border border-rose-500/40";
-    }
-
-    modalWordStatus.textContent = statusText;
-    modalWordStatus.className = `inline-block px-3 py-1 rounded-full text-xs font-bold uppercase mb-3 ${statusClass}`;
-
+  function openWordModal(wordData) {
+    modalArabicWord.textContent = wordData.word || '';
     modalWordIssues.innerHTML = '';
 
-    if (item.rules_present && item.rules_present.length > 0) {
-      const rulesDiv = document.createElement('div');
-      rulesDiv.className = "text-[11px] text-amber-300 font-semibold mb-1.5";
-      rulesDiv.textContent = `So'zdagi qoidalar: ${item.rules_present.join(', ')}`;
-      modalWordIssues.appendChild(rulesDiv);
-    }
+    const statusMap = {
+      correct: { text: "To'g'ri o'qilgan", cls: 'bg-emerald-100 text-emerald-700' },
+      tajweed_issue: { text: 'Tajvid qoidasi', cls: 'bg-amber-100 text-amber-700' },
+      incorrect: { text: 'Xato oʻqilgan', cls: 'bg-red-100 text-red-700' },
+      missing: { text: "O'qilmay qoldirilgan", cls: 'bg-red-100 text-red-700' }
+    };
 
-    if (item.tajweed_issues && item.tajweed_issues.length > 0) {
-      item.tajweed_issues.forEach((issue) => {
-        const p = document.createElement('p');
-        p.className = "text-rose-300";
-        p.textContent = `• ${issue.message_uz || issue.rule}`;
-        modalWordIssues.appendChild(p);
+    const st = statusMap[wordData.status] || statusMap.correct;
+    modalWordStatus.textContent = st.text;
+    modalWordStatus.className = `mt-2 text-xs font-bold px-2.5 py-1 rounded-full inline-block ${st.cls}`;
+
+    if (wordData.tajweed_issues && wordData.tajweed_issues.length > 0) {
+      wordData.tajweed_issues.forEach((iss) => {
+        const item = document.createElement('div');
+        item.className = 'p-2 rounded-xl bg-zinc-50 border border-zinc-100 text-xs text-zinc-700';
+        item.textContent = iss.message_uz || iss.rule || 'Tajvid qoidasi';
+        modalWordIssues.appendChild(item);
       });
-    } else if (item.status === 'correct') {
-      const p = document.createElement('p');
-      p.className = "text-emerald-300";
-      p.textContent = "✓ Mazkur so'z to'g'ri talaffuz qilindi.";
-      modalWordIssues.appendChild(p);
+    } else {
+      const item = document.createElement('div');
+      item.className = 'p-2 text-xs text-zinc-400 text-center';
+      item.textContent = 'Ushbu soʻzda tajvid kamchiligi aniqlanmadi.';
+      modalWordIssues.appendChild(item);
     }
 
     wordDetailsModal.classList.remove('hidden');
   }
 
-  function renderSurahsList(surahs) {
-    surahsListContainer.innerHTML = '';
-
-    surahs.forEach((surah) => {
-      const item = document.createElement('div');
-      const isCurrent = state.currentSurah && state.currentSurah.number === surah.number;
-      item.className = `p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-        isCurrent
-          ? 'bg-amber-500/15 border-amber-500/50 shadow-md shadow-amber-500/10'
-          : 'bg-white/[0.03] hover:bg-emerald-950/40 border-white/10 hover:border-emerald-500/30'
-      }`;
-
-      item.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500/20 to-emerald-500/20 border border-amber-500/30 flex items-center justify-center font-bold text-xs text-amber-300">
-            ${surah.number}
-          </div>
-          <div>
-            <div class="font-bold text-sm text-white">${surah.name_uz}</div>
-            <div class="text-[11px] text-slate-400">${surah.total_ayahs} oyat • ${surah.revelation_place === 'makkah' ? 'Makka' : 'Madina'}</div>
-          </div>
-        </div>
-        <div class="quran-text text-xl text-amber-200">${surah.name_arabic}</div>
-      `;
-
-      item.addEventListener('click', () => selectSurah(surah));
-      surahsListContainer.appendChild(item);
-    });
+  function showIdleControls() {
+    controlsRecording.classList.add('hidden');
+    controlsIdle.classList.remove('hidden');
   }
 
+  function showRecordingControls() {
+    controlsIdle.classList.add('hidden');
+    controlsRecording.classList.remove('hidden');
+  }
+
+  // Boot on DOM ready
   document.addEventListener('DOMContentLoaded', init);
 })();
