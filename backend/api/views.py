@@ -28,6 +28,13 @@ logger = logging.getLogger(__name__)
 class SurahListView(views.APIView):
     def get(self, request):
         telegram_id = request.query_params.get('telegram_id')
+        if not Surah.objects.exists():
+            from django.core.management import call_command
+            try:
+                call_command('import_quran', sample=True)
+            except Exception as e:
+                logger.error(f"Auto-seeding Quran data failed: {e}")
+
         surahs = Surah.objects.all().order_by('number')
         serializer = SurahSerializer(surahs, many=True, context={'telegram_id': telegram_id})
         return Response(serializer.data)

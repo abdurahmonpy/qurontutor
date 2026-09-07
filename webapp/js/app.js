@@ -2,9 +2,47 @@
  * Master Application Controller for Learn Quran (Iqra Tutor)
  */
 (function () {
-  const API_BASE = window.location.origin.includes(':8000') || window.location.origin.includes(':5173')
-    ? `${window.location.origin}/api`
-    : 'http://127.0.0.1:8000/api';
+  // Relative API URL - always points to the current server (Railway, local, or custom domain)
+  const API_BASE = '/api';
+
+  // Fallback Sample Data if network is down or database is initializing
+  const BACKUP_SURAHS = [
+    {
+      id: 1,
+      number: 1,
+      name_uz: 'Fotiha',
+      name_arabic: 'الفاتحة',
+      ayah_count: 7
+    },
+    {
+      id: 112,
+      number: 112,
+      name_uz: 'Ixlos',
+      name_arabic: 'الإخلاص',
+      ayah_count: 4
+    },
+    {
+      id: 113,
+      number: 113,
+      name_uz: 'Falaq',
+      name_arabic: 'الفلق',
+      ayah_count: 5
+    },
+    {
+      id: 114,
+      number: 114,
+      name_uz: 'Nos',
+      name_arabic: 'الناس',
+      ayah_count: 6
+    },
+    {
+      id: 108,
+      number: 108,
+      name_uz: 'Kavsar',
+      name_arabic: 'الكوثر',
+      ayah_count: 3
+    }
+  ];
 
   // Telegram WebApp Setup
   const tg = window.Telegram?.WebApp;
@@ -80,7 +118,7 @@
   const btnCancelRecord = document.getElementById('btnCancelRecord');
   const recordingTimer = document.getElementById('recordingTimer');
 
-  // DOM Elements - Modals & Tabs
+  // DOM Elements - Modals
   const tajweedInfoModal = document.getElementById('tajweedInfoModal');
   const btnCloseInfoModal = document.getElementById('btnCloseInfoModal');
   const wordDetailsModal = document.getElementById('wordDetailsModal');
@@ -88,8 +126,6 @@
   const modalArabicWord = document.getElementById('modalArabicWord');
   const modalWordStatus = document.getElementById('modalWordStatus');
   const modalWordIssues = document.getElementById('modalWordIssues');
-  const navTabJourney = document.getElementById('navTabJourney');
-  const navTabQuran = document.getElementById('navTabQuran');
 
   // Format English verse title (e.g. "Al-Faatiha")
   function formatEnglishName(surah) {
@@ -107,7 +143,7 @@
       113: 'Al-Falaq',
       114: 'An-Naas'
     };
-    return nameMap[surah.number] || surah.name_simple || surah.name_uz || `Surah ${surah.number}`;
+    return nameMap[surah.number] || surah.name_uz || surah.name_simple || `Surah ${surah.number}`;
   }
 
   async function init() {
@@ -138,30 +174,12 @@
   }
 
   function setupEventListeners() {
-    // View switching via Close Button
+    // Return to Surah List
     btnClosePractice.addEventListener('click', () => {
       stopAudioPlayback();
       if (state.isRecording) cancelRecording();
       showSurahsView();
     });
-
-    // Bottom Navigation Tabs
-    if (navTabJourney) {
-      navTabJourney.addEventListener('click', () => {
-        stopAudioPlayback();
-        showSurahsView();
-      });
-    }
-
-    if (navTabQuran) {
-      navTabQuran.addEventListener('click', () => {
-        if (state.currentSurah) {
-          showPracticeView();
-        } else if (state.surahs.length > 0) {
-          selectSurah(state.surahs[0]);
-        }
-      });
-    }
 
     // Search filter
     surahSearchInput.addEventListener('input', (e) => {
@@ -225,7 +243,7 @@
         state.currentAyahIndex++;
         displayCurrentAyah();
       } else {
-        alert('Tabriklaymiz! Siz ushbu suraning barcha oyatlarini yakunladingiz!');
+        alert('Mashalloh! Siz ushbu suraning barcha oyatlarini yakunladingiz!');
         showSurahsView();
       }
     });
@@ -238,26 +256,12 @@
     viewPractice.classList.add('hidden');
     viewSurahs.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    if (navTabJourney && navTabQuran) {
-      navTabJourney.classList.add('text-[#D97706]', 'font-extrabold');
-      navTabJourney.classList.remove('text-zinc-400');
-      navTabQuran.classList.remove('text-[#D97706]', 'font-extrabold');
-      navTabQuran.classList.add('text-zinc-400');
-    }
   }
 
   function showPracticeView() {
     viewSurahs.classList.add('hidden');
     viewPractice.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    if (navTabJourney && navTabQuran) {
-      navTabQuran.classList.add('text-[#D97706]', 'font-extrabold');
-      navTabQuran.classList.remove('text-zinc-400');
-      navTabJourney.classList.remove('text-[#D97706]', 'font-extrabold');
-      navTabJourney.classList.add('text-zinc-400');
-    }
   }
 
   // ==========================================
@@ -266,20 +270,23 @@
   async function loadSurahs() {
     try {
       const res = await fetch(`${API_BASE}/surahs/?telegram_id=${telegramId}`);
-      if (!res.ok) throw new Error('Suralarni yuklab boʻlmadi');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      state.surahs = data;
+
+      if (Array.isArray(data) && data.length > 0) {
+        state.surahs = data;
+      } else {
+        state.surahs = BACKUP_SURAHS;
+      }
       renderSurahsList(state.surahs);
 
-      // Select first surah by default
       if (state.surahs.length > 0 && !state.currentSurah) {
         state.currentSurah = state.surahs[0];
       }
     } catch (e) {
-      surahsListContainer.innerHTML = `
-        <div class="p-4 bg-red-50 text-red-700 text-xs rounded-2xl border border-red-200 text-center">
-          Tarmoq xatosi: ${e.message}. Iltimos, qayta urinib ko'ring.
-        </div>`;
+      console.warn('API error, using backup surahs:', e);
+      state.surahs = BACKUP_SURAHS;
+      renderSurahsList(state.surahs);
     }
   }
 
@@ -299,11 +306,11 @@
       card.className = 'flex items-center justify-between p-3.5 bg-white rounded-2xl border border-zinc-100 shadow-sm hover:border-amber-400/80 hover:shadow-md transition-all cursor-pointer transform active:scale-[0.99]';
       
       const enName = formatEnglishName(surah);
-      const verseCount = surah.ayah_count || (surah.number === 1 ? 7 : 10);
+      const verseCount = surah.ayah_count || (surah.number === 1 ? 7 : 4);
 
       card.innerHTML = `
         <div class="flex items-center gap-3.5">
-          <!-- Circular Number Badge with dot -->
+          <!-- Circular Number Badge -->
           <div class="surah-num-badge shrink-0">
             ${surah.number}
           </div>
@@ -311,7 +318,7 @@
           <!-- Surah Title & Verses -->
           <div>
             <h3 class="font-bold text-zinc-900 text-[15px] leading-tight">${enName}</h3>
-            <p class="text-xs text-zinc-400 font-medium mt-0.5">${verseCount} verses</p>
+            <p class="text-xs text-zinc-400 font-medium mt-0.5">${verseCount} oyat</p>
           </div>
         </div>
 
@@ -332,11 +339,11 @@
   async function selectSurah(surah) {
     state.currentSurah = surah;
     state.currentAyahIndex = 0;
-    practiceSurahName.textContent = formatEnglishName(surah);
+    practiceSurahName.textContent = `${formatEnglishName(surah)} surasi`;
     practiceSurahArabic.textContent = surah.name_arabic || '';
 
     showPracticeView();
-    await loadAyahsForSurah(surah.id);
+    await loadAyahsForSurah(surah.id || surah.number);
   }
 
   async function loadAyahsForSurah(surahId) {
@@ -346,17 +353,17 @@
 
     try {
       const res = await fetch(`${API_BASE}/surahs/${surahId}/ayahs/?telegram_id=${telegramId}`);
-      if (!res.ok) throw new Error('Oyatlar yuklanmadi');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       state.ayahs = data;
 
-      if (state.ayahs.length > 0) {
+      if (state.ayahs && state.ayahs.length > 0) {
         displayCurrentAyah();
       } else {
-        quranTextContainer.textContent = "Ushbu surada oyat ma'lumotlari topilmadi.";
+        quranTextContainer.textContent = "Oyat ma'lumotlari topilmadi.";
       }
     } catch (e) {
-      quranTextContainer.innerHTML = `<span class="text-red-500 text-xs font-sans">Xatolik: ${e.message}</span>`;
+      quranTextContainer.innerHTML = `<span class="text-red-500 text-xs font-sans">Oyatni yuklab bo'lmadi (${e.message})</span>`;
     }
   }
 
@@ -376,7 +383,7 @@
     const totalAyahs = state.ayahs.length;
     const currentNum = state.currentAyahIndex + 1;
     practiceAyahCounter.textContent = `${currentNum}/${totalAyahs}`;
-    cardAyahBadge.textContent = `Ayah: ${ayah.ayah_number}`;
+    cardAyahBadge.textContent = `${ayah.ayah_number}-oyat`;
 
     const progressPercent = Math.round((currentNum / totalAyahs) * 100);
     practiceProgressBar.style.width = `${progressPercent}%`;
@@ -393,7 +400,7 @@
     }
 
     // Transliteration & Translation
-    translitContainer.textContent = ayah.transliteration || 'Transliteratsiya mavjud emas';
+    translitContainer.textContent = ayah.transliteration || "O'qilishi mavjud emas";
     translationContainer.textContent = ayah.translation_uz || ayah.translation_en || "Tarjima mavjud emas";
 
     // Setup Official Audio
@@ -489,7 +496,7 @@
   function cancelRecording() {
     stopRecordingTimer();
     if (state.audioRecorder) {
-      state.audioRecorder.stop();
+      state.audioRecorder.cancel();
     }
     state.isRecording = false;
     liveTranscriptBox.classList.add('hidden');
@@ -507,7 +514,7 @@
       try {
         const recResult = await state.audioRecorder.stop();
         audioBlob = recResult.audioBlob || recResult.blob;
-        spokenText = recResult.spokenText || state.audioRecorder.transcript || '';
+        spokenText = recResult.spokenText || state.audioRecorder.spokenTranscript || '';
       } catch (e) {
         console.warn('Audio stop error:', e);
       }
