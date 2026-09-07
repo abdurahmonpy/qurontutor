@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="uz" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Iqra • Qur'on Tilovat & Tajvid Murabbiyi</title>
+  
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            mushaf: {
+              dark: '#030d0a',
+              card: '#061a14',
+              border: '#f59e0b'
+            },
+            emerald: {
+              850: '#064e3b',
+              950: '#022c22'
+            },
+            gold: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- App Styles & Typography -->
+  <link rel="stylesheet" href="/static/css/app.css">
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+<body class="islamic-mesh min-h-screen flex flex-col text-slate-100 selection:bg-amber-500/30">
+
+  <!-- Top Glass Navigation Bar -->
+  <header class="sticky top-0 z-40 px-4 py-3 backdrop-blur-2xl bg-[#04120e]/80 border-b border-amber-500/20 shadow-xl transition-all">
+    <div class="max-w-3xl mx-auto flex items-center justify-between gap-3">
+      
+      <!-- Brand Crest -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-emerald-500 to-amber-400 p-0.5 shadow-lg shadow-amber-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-[#04120e] rounded-[14px] flex items-center justify-center text-lg">
+            <span>✨</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-sm sm:text-base font-extrabold tracking-wide bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text text-transparent">
+              Iqra Quran Tutor
+            </h1>
+            <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              AI
+            </span>
+          </div>
+          <p class="text-[10px] text-emerald-400 font-medium">Tajvid va Tilovat Murabbiyi</p>
+        </div>
+      </div>
+
+      <!-- Surah Selector & Stats Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="btnOpenSurahs" class="glass-pill px-3 py-1.5 rounded-2xl flex items-center gap-2 text-xs font-semibold text-amber-200 hover:text-white border border-amber-500/30 hover:border-amber-400 shadow-md">
+          <span class="text-amber-400">📖</span>
+          <span id="headerSurahName" class="max-w-[120px] sm:max-w-[170px] truncate">1. Fotiha</span>
+          <svg class="w-3.5 h-3.5 text-amber-400/80 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </button>
+
+        <button id="btnStats" class="glass-pill p-2 rounded-2xl text-emerald-300 hover:text-white" title="Mening natijalarim">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-3xl mx-auto w-full px-4 py-4 flex flex-col gap-4">
+    
+    <!-- Ornate Surah Mushaf Header Frame -->
+    <section class="surah-frame rounded-3xl p-4 sm:p-5 relative overflow-hidden flex items-center justify-between text-center">
+      <div class="flex items-center gap-2">
+        <span id="currentSurahPlace" class="px-2.5 py-1 rounded-xl bg-amber-500/20 border border-amber-500/40 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+          Makka
+        </span>
+        <span id="currentAyahIndicator" class="text-xs sm:text-sm font-semibold text-slate-300">
+          1 / 7 Oyat
+        </span>
+      </div>
+
+      <!-- Surah Arabic Title in Ornate script -->
+      <div class="flex flex-col items-center">
+        <div id="surahArabicTitle" class="quran-text text-2xl sm:text-3xl text-amber-200 font-bold leading-tight">
+          سورة الفاتحة
+        </div>
+      </div>
+
+      <!-- Ayah Steppers -->
+      <div class="flex items-center gap-1.5">
+        <button id="btnPrevAyah" class="glass-pill p-2 rounded-xl text-slate-300 disabled:opacity-30 disabled:hover:scale-100" disabled title="Oldingi oyat">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <button id="btnNextAyah" class="glass-pill p-2 rounded-xl text-slate-300 disabled:opacity-30 disabled:hover:scale-100" title="Keyingi oyat">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Main Ayah Reading Stage -->
+    <section class="mushaf-card rounded-3xl p-6 sm:p-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
+      
+      <!-- Top Text Size & View Controls -->
+      <div class="w-full flex items-center justify-between pb-3 mb-2 border-b border-white/10 text-xs text-slate-400">
+        <div class="flex items-center gap-2">
+          <button id="btnToggleTranslit" class="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-amber-300 border border-amber-500/20 text-[11px] font-medium transition-colors">
+            Lotincha
+          </button>
+          <button id="btnToggleTrans" class="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-emerald-300 border border-emerald-500/20 text-[11px] font-medium transition-colors">
+            Ma'nosi
+          </button>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button id="btnFontMinus" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-bold" title="Shriftni kichiklashtirish">A-</button>
+          <button id="btnFontPlus" class="px-2 py-0.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 font-bold" title="Shriftni kattalashtirish">A+</button>
+        </div>
+      </div>
+
+      <!-- Quranic Arabic Text Display -->
+      <div id="quranTextContainer" class="quran-text text-amber-100 py-4 w-full text-3xl sm:text-4xl transition-all duration-200">
+        بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ <span class="ayah-end-symbol">۝١</span>
+      </div>
+
+      <!-- Qori Audio Player Bar -->
+      <div class="w-full mt-4 p-3 rounded-2xl bg-black/40 border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button id="btnPlayOfficialAudio" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30 transition-transform active:scale-95">
+            <span id="playAudioIcon" class="text-sm ml-0.5">▶</span>
+          </button>
+          <div class="text-left">
+            <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+              <span>Mishari Rashid Alafasy</span>
+              <span id="audioPlayingWave" class="hidden text-amber-400 text-xs animate-pulse">● Tilovat yangramoqda</span>
+            </div>
+            <div class="text-[10px] text-slate-400">Rasmiy namuna qiroati</div>
+          </div>
+        </div>
+
+        <!-- Audio Timeline Scrubber -->
+        <div class="flex items-center gap-2.5 w-full sm:w-60">
+          <span id="audioCurrentTime" class="text-[10px] font-mono text-slate-400">0:00</span>
+          <input id="audioTimeline" type="range" min="0" max="100" value="0" class="audio-timeline flex-1">
+          <span id="audioTotalDuration" class="text-[10px] font-mono text-slate-400">0:05</span>
+        </div>
+
+        <audio id="officialAudioElement" preload="none"></audio>
+      </div>
+
+      <!-- Transliteration and Uzbek Meaning -->
+      <div class="w-full mt-4 text-left space-y-2">
+        <div id="translitContainer" class="p-3 rounded-2xl bg-white/[0.03] border border-white/5 text-xs sm:text-sm text-amber-200/90 font-medium italic">
+          Bismillahir Rohmanir Rohiym
+        </div>
+        <div id="translationContainer" class="p-3 rounded-2xl bg-white/[0.03] border border-white/5 text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Mehribon va rahmli Allohning nomi ila boshlayman.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Recitation Studio & Live Voice Recognition -->
+    <section class="mushaf-card rounded-3xl p-6 sm:p-7 flex flex-col items-center justify-center text-center relative overflow-hidden">
+      
+      <!-- Live Dynamic Audio Soundwave visualizer -->
+      <div id="visualizerContainer" class="w-full h-14 mb-3 hidden">
+        <canvas id="audioVisualizerCanvas" width="400" height="56" class="w-full h-full rounded-2xl bg-black/40"></canvas>
+      </div>
+
+      <!-- Status Pill & Timer -->
+      <div class="mb-4 flex flex-col items-center gap-1">
+        <div id="recStatusPill" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 backdrop-blur-md">
+          <span id="statusIndicatorDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="recStatusLabel">Tilovat qilish uchun bosing</span>
+        </div>
+        <div id="recordingTimer" class="text-2xl font-bold font-mono text-amber-300 hidden">
+          00:00
+        </div>
+      </div>
+
+      <!-- Center Glowing Glass Record Orb -->
+      <div class="relative flex items-center justify-center my-2">
+        <div id="recordPulseRing" class="absolute w-28 h-28 rounded-full bg-rose-500/25 animate-ping hidden pointer-events-none"></div>
+
+        <button id="btnRecord" class="rec-orb w-24 h-24 rounded-full flex items-center justify-center text-white cursor-pointer active:scale-95" title="Ovoz yozish">
+          <svg id="micIcon" class="w-10 h-10 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+          </svg>
+          <svg id="stopIcon" class="w-9 h-9 text-white hidden drop-shadow-md" fill="currentColor" viewBox="0 0 24 24">
+            <rect x="6" y="6" width="12" height="12" rx="3"></rect>
+          </svg>
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-400 mt-3 max-w-sm leading-relaxed">
+        Mikrofonni bosing va oyatni dona-dona tilovat qiling. Tugatgach, qayta bosib tahlil qiling.
+      </p>
+
+      <!-- Live Real-Time Speech Recognition Transcript Box -->
+      <div id="liveTranscriptBox" class="w-full max-w-lg mt-4 p-3.5 rounded-2xl bg-black/50 border border-emerald-500/30 text-center hidden">
+        <div class="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 uppercase font-bold tracking-wider mb-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          <span>Eshitilayotgan nutq:</span>
+        </div>
+        <p id="liveTranscriptText" class="quran-text text-xl sm:text-2xl text-amber-200 min-h-[36px] leading-relaxed">
+          ...
+        </p>
+      </div>
+
+    </section>
+
+    <!-- Tajweed Evaluation & Detailed Results Dashboard -->
+    <section id="evaluationResultCard" class="mushaf-card rounded-3xl p-6 sm:p-7 hidden animate-fadeIn">
+      
+      <!-- Top Radial Score & Performance Dashboard -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-5 pb-5 mb-5 border-b border-white/10">
+        
+        <!-- Score Circular Gauge -->
+        <div class="flex items-center gap-4">
+          <div class="relative w-20 h-20 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path id="scoreCirclePath" class="text-amber-400 transition-all duration-1000" stroke-dasharray="100, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="resultScorePercent" class="text-xl font-extrabold text-white">0%</span>
+            </div>
+          </div>
+
+          <div class="text-left">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">Qiroat Aniqligi</span>
+            <div class="flex items-center gap-2 mt-0.5">
+              <h3 class="text-lg font-bold text-white">Tilovat Natijasi</h3>
+              <span id="resultScoreBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                A'lo
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">Tajvid va harakatlar tahlili</p>
+          </div>
+        </div>
+
+        <!-- Metric Badges Grid -->
+        <div class="grid grid-cols-3 gap-2.5 w-full sm:w-auto">
+          <div class="p-2.5 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 text-center">
+            <div id="statCorrectWords" class="text-lg font-extrabold text-emerald-300">0</div>
+            <div class="text-[10px] uppercase font-semibold text-emerald-400">To'g'ri</div>
+          </div>
+          <div class="p-2.5 rounded-2xl bg-amber-950/60 border border-amber-500/30 text-center">
+            <div id="statTajweedIssues" class="text-lg font-extrabold text-amber-300">0</div>
+            <div class="text-[10px] uppercase font-semibold text-amber-400">Tajvid</div>
+          </div>
+          <div class="p-2.5 rounded-2xl bg-rose-950/60 border border-rose-500/30 text-center">
+            <div id="statIncorrectWords" class="text-lg font-extrabold text-rose-300">0</div>
+            <div class="text-[10px] uppercase font-semibold text-rose-400">Xato</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Tutor Verbal Feedback Note -->
+      <div class="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 mb-5 flex items-start gap-3 text-left">
+        <span class="text-xl shrink-0">📜</span>
+        <div>
+          <h4 class="text-xs font-bold text-amber-300 uppercase tracking-wider mb-0.5">Murabbiy mulohazasi</h4>
+          <p id="resultFeedbackText" class="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed">
+            Tilovat tahlili tayyor.
+          </p>
+        </div>
+      </div>
+
+      <!-- Interactive Word By Word Breakdown -->
+      <div class="mb-6 text-left">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">So'zma-so'z Tajvid Tahlili:</span>
+          <span class="text-[11px] text-slate-500">So'z ustiga bosing</span>
+        </div>
+        
+        <div id="evaluatedWordsContainer" class="quran-text text-right p-4 rounded-2xl bg-black/40 border border-white/10 text-2xl sm:text-3xl leading-loose">
+          <!-- Dynamic word pills injected via JS -->
+        </div>
+      </div>
+
+      <!-- Action Navigation Buttons -->
+      <div class="flex items-center gap-3 pt-2">
+        <button id="btnRetryRecitation" class="flex-1 py-3.5 rounded-2xl glass-pill hover:bg-white/10 text-amber-300 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2">
+          <span>🔄</span>
+          <span>Qayta urinish</span>
+        </button>
+
+        <button id="btnProceedNextAyah" class="flex-1 py-3.5 rounded-2xl btn-gold-luxury text-slate-950 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xl">
+          <span>Keyingi oyat</span>
+          <span>➔</span>
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Word Details Inspection Modal Sheet -->
+  <div id="wordDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md hidden animate-fadeIn">
+    <div class="mushaf-card max-w-sm w-full rounded-3xl p-6 relative shadow-2xl border border-amber-500/30">
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-300">So'z & Tajvid Tahlili</h4>
+        <button id="btnCloseWordModal" class="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors">✕</button>
+      </div>
+
+      <div class="text-center py-3">
+        <div id="modalArabicWord" class="quran-text text-4xl text-amber-200 mb-2">بِسْمِ</div>
+        <div id="modalWordStatus" class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase mb-3">To'g'ri o'qildi</div>
+      </div>
+
+      <div id="modalWordIssues" class="space-y-2 text-xs text-slate-200 text-left bg-black/50 p-3.5 rounded-2xl border border-white/10 leading-relaxed">
+        <!-- Tajweed and phonetic notes -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Surahs Selector Drawer Modal -->
+  <div id="surahsModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-lg hidden animate-fadeIn">
+    <div class="mushaf-card w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 max-h-[85vh] flex flex-col shadow-2xl border border-amber-500/30">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10 shrink-0">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <span>Surani Tanlang</span>
+            <span class="text-xs font-normal text-amber-400 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">114 Sura</span>
+          </h3>
+          <p class="text-xs text-slate-400">Qiroat qilmoqchi bo'lgan surangizni tanlang</p>
+        </div>
+        <button id="btnCloseSurahsModal" class="p-2 rounded-2xl hover:bg-white/10 text-slate-400 hover:text-white transition-colors">✕</button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="mb-3 shrink-0">
+        <div class="relative">
+          <input id="surahSearchInput" type="text" placeholder="Sura nomi yoki raqamini yozing (masalan: Fotiha, 112)..." class="w-full px-4 py-3 pl-10 rounded-2xl bg-black/50 border border-white/15 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Surah List -->
+      <div id="surahsListContainer" class="flex-1 overflow-y-auto space-y-2 pr-1">
+        <!-- Injected via app.js -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/audio-recorder.js"></script>
+  <script src="/static/js/tajweed-highlighter.js"></script>
+  <script src="/static/js/app.js"></script>
+
+</body>
+</html>

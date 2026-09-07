@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: quran_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: quran_tutor_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 2. FastAPI ASR & Tajweed Alignment Microservice (can be placed on GPU host)
+  asr_service:
+    build:
+      context: .
+      dockerfile: asr_service/Dockerfile
+    container_name: quran_asr
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+
+  # 3. Django Backend & Telegram Mini App
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: quran_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - DATABASE_URL=postgres://postgres:postgrespassword@db:5432/quran_tutor_db
+      - ASR_SERVICE_URL=http://asr_service:8001
+    depends_on:
+      - db
+      - asr_service
+
+  # 4. aiogram 3 Telegram Bot
+  bot:
+    build:
+      context: .
+      dockerfile: bot/Dockerfile
+    container_name: quran_bot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - WEBAPP_URL=${WEBAPP_URL:-http://localhost:8000/}
+      - API_BASE_URL=http://backend:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
