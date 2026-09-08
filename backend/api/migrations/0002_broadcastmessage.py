@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(help_text='Xabarnoma ichki nomi (admin uchun)', max_length=255)),
                 ('message_text', models.TextField(help_text='Xabar matni (HTML formatida: <b>qalin</b>, <i>kursiv</i>, {name} shaxsiy ism)')),
-                ('photo', models.ImageField(blank=True, help_text="Xabarga qo'shiladigan rasm (ixtiyoriy)", null=True, upload_to='broadcasts/%Y/%m/')),
+                ('photo', models.FileField(blank=True, help_text="Xabarga qo'shiladigan rasm (ixtiyoriy)", null=True, upload_to='broadcasts/%Y/%m/')),
                 ('button_text', models.CharField(blank=True, default='', help_text='Inline tugma yozuvi (masalan: 📖 Tilovatni Boshlash)', max_length=100)),
                 ('button_url', models.URLField(blank=True, default='', help_text='Tugma bosilganda ochiladigan havola', max_length=500)),
                 ('target_audience', models.CharField(choices=[('all', 'Barcha foydalanuvchilar'), ('active', 'Faol qorilar (kamida 1 tilovat qilganlar)'), ('inactive', 'Hali tilovat topshirmaganlar')], default='all', help_text='Xabar kimlarga yetkazilsin?', max_length=20)),

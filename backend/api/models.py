@@ -95,7 +95,7 @@ class BroadcastMessage(models.Model):
 
     title = models.CharField(max_length=255, help_text="Xabarnoma ichki nomi (admin uchun)")
     message_text = models.TextField(help_text="Xabar matni (HTML formatida: <b>qalin</b>, <i>kursiv</i>, {name} shaxsiy ism)")
-    photo = models.ImageField(upload_to='broadcasts/%Y/%m/', null=True, blank=True, help_text="Xabarga qo'shiladigan rasm (ixtiyoriy)")
+    photo = models.FileField(upload_to='broadcasts/%Y/%m/', null=True, blank=True, help_text="Xabarga qo'shiladigan rasm (ixtiyoriy)")
     button_text = models.CharField(max_length=100, blank=True, default='', help_text="Inline tugma yozuvi (masalan: 📖 Tilovatni Boshlash)")
     button_url = models.URLField(max_length=500, blank=True, default='', help_text="Tugma bosilganda ochiladigan havola")
     target_audience = models.CharField(max_length=20, choices=TARGET_CHOICES, default='all', help_text="Xabar kimlarga yetkazilsin?")

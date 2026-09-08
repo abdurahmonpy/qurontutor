@@ -2,6 +2,7 @@ import csv
 from django.contrib import admin
 from django.http import HttpResponse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.db.models import Avg, Count
 from django.utils import timezone
 from .models import TelegramUser, Surah, Ayah, RecitationAttempt, UserProgress, BroadcastMessage
@@ -360,7 +361,7 @@ class RecitationAttemptAdmin(admin.ModelAdmin):
             '<tr><th style="padding: 10px;">Asl So\'z</th><th style="padding: 10px;">O\'qilgan</th><th style="padding: 10px;">Moslik</th><th style="padding: 10px;">Holat</th><th style="padding: 10px;">Tajvid Izohi</th></tr>'
             '</thead><tbody>' + "".join(rows) + '</tbody></table>'
         )
-        return format_html(table_html)
+        return mark_safe(table_html)
     formatted_word_results.short_description = "Har Bir So'z Tahlili"
 
 
@@ -458,25 +459,28 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
     sent_count_display.short_description = "Yetkazildi / Xatolik"
 
     def message_preview(self, obj):
-        img_html = ""
-        if obj.photo:
-            try:
-                img_html = f'<img src="{obj.photo.url}" style="max-width: 250px; border-radius: 8px; margin-bottom: 10px; display: block;">'
-            except Exception:
-                img_html = ""
+        try:
+            img_html = ""
+            if obj.photo:
+                try:
+                    img_html = f'<img src="{obj.photo.url}" style="max-width: 250px; border-radius: 8px; margin-bottom: 10px; display: block;">'
+                except Exception:
+                    img_html = ""
 
-        btn_html = ""
-        if obj.button_text and obj.button_url:
-            btn_html = f'<div style="margin-top: 12px;"><a href="{obj.button_url}" target="_blank" style="background: #f59e0b; color: #000; font-weight: 600; padding: 6px 14px; border-radius: 6px; text-decoration: none; display: inline-block; font-size: 12px;">{obj.button_text}</a></div>'
-        
-        return format_html(
-            '<div style="background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; max-width: 450px; color: #f8fafc;">'
-            '{}{}{}'
-            '</div>',
-            format_html(img_html),
-            format_html(obj.message_text or "<i>Xabar matni kiritilmagan</i>"),
-            format_html(btn_html)
-        )
+            btn_html = ""
+            if obj.button_text and obj.button_url:
+                btn_html = f'<div style="margin-top: 12px;"><a href="{obj.button_url}" target="_blank" style="background: #f59e0b; color: #000; font-weight: 600; padding: 6px 14px; border-radius: 6px; text-decoration: none; display: inline-block; font-size: 12px;">{obj.button_text}</a></div>'
+            
+            body_text = (obj.message_text or "<i>Xabar matni kiritilmagan</i>").replace('\n', '<br>')
+            return mark_safe(
+                f'<div style="background: #1e293b; padding: 16px; border-radius: 12px; border: 1px solid #334155; max-width: 450px; color: #f8fafc;">'
+                f'{img_html}'
+                f'<div>{body_text}</div>'
+                f'{btn_html}'
+                f'</div>'
+            )
+        except Exception as e:
+            return f"Ko'rinish yuklanmadi: {e}"
     message_preview.short_description = "Xabar Ko'rinishi (Preview)"
 
     def send_broadcast_action(self, request, queryset):
