@@ -52,8 +52,6 @@ async def cmd_start(message: types.Message):
         "Ushbu bot orqali siz:\n"
         "• Sura va oyatlarni tanlab qiroat qilasiz;\n"
         "• O'z ovozingizni yozib yuborasiz;\n"
-        "• Sun'iy intellekt va tajvid qoidalari yordamida har bir so'z bo'yicha "
-        "(yashil — to'g'ri, qizil — xato, sariq — tajvid kamchiligi) xatolaringizni ko'rib borasiz;\n"
         "• Rasmiy mashhur qorilar qiroatini eshitib o'rganasiz.\n\n"
     )
 
