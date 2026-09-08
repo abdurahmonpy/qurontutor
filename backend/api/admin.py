@@ -1,4 +1,6 @@
+import os
 import csv
+import logging
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.urls import path, reverse
@@ -9,6 +11,19 @@ from django.db.models import Avg, Count
 from django.utils import timezone
 from .models import TelegramUser, Surah, Ayah, RecitationAttempt, UserProgress, BroadcastMessage
 from .telegram_service import broadcast_to_users
+
+logger = logging.getLogger(__name__)
+
+def get_broadcast_photo_data(msg):
+    if not msg or not msg.photo:
+        return None, None
+    try:
+        if hasattr(msg.photo, 'storage') and msg.photo.name and msg.photo.storage.exists(msg.photo.name):
+            with msg.photo.storage.open(msg.photo.name, 'rb') as f:
+                return f.read(), os.path.basename(msg.photo.name)
+    except Exception as e:
+        logger.warning(f"Rasm faylini yuklashda ogohlantirish ({msg.photo}): {e}")
+    return None, None
 
 # Admin Branding
 admin.site.site_header = "Qur'on Tilovat Murabbiyi • Boshqaruv Paneli"
@@ -620,67 +635,9 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def send_single_broadcast(self, request, message_id):
-        msg = get_object_or_404(BroadcastMessage, pk=message_id)
+        try:
+            msg = get_object_or_404(BroadcastMessage, pk=message_id)
 
-        # Filter audience
-        if msg.target_audience == 'active':
-            users = TelegramUser.objects.filter(attempts__isnull=False).distinct()
-        elif msg.target_audience == 'inactive':
-            users = TelegramUser.objects.filter(attempts__isnull=True)
-        elif msg.target_audience == 'selected':
-            users = msg.selected_users.all()
-        else:
-            users = TelegramUser.objects.all()
-
-        count = users.count()
-        if count == 0:
-            if msg.target_audience == 'selected':
-                warn_text = f"Xatolik: '{msg.title}' uchun birorta ham foydalanuvchi tanlanmagan! Iltimos, xabarni ochib, 'Tanlangan foydalanuvchilar' ro'yxatidan odamlarni tanlab saqlang."
-            else:
-                audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
-                warn_text = f"Diqqat: '{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. Xabar yuborilmadi. Agar xabarni barcha bot foydalanuvchilariga yubormoqchi bo'lsangiz, Auditoriyani 'Barcha foydalanuvchilar'ga o'zgartirib saqlang."
-            self.message_user(request, warn_text, level=messages.WARNING)
-            return redirect('admin:api_broadcastmessage_changelist')
-
-        msg.status = 'sending'
-        msg.save()
-
-        photo_file = msg.photo.file if msg.photo else None
-        sent, failed, errors = broadcast_to_users(
-            user_qs=users,
-            text=msg.message_text,
-            photo=photo_file,
-            button_text=msg.button_text,
-            button_url=msg.button_url
-        )
-
-        msg.sent_count = sent
-        msg.failed_count = failed
-        msg.status = 'sent' if (sent > 0 or failed == 0) else 'failed'
-        msg.sent_at = timezone.now()
-        if errors:
-            msg.error_summary = "\n".join(errors[:20])
-        msg.save()
-
-        if sent > 0:
-            self.message_user(
-                request,
-                f"🎉 '{msg.title}' xabarnomasi muvaffaqiyatli yuborildi! Jami yetkazildi: {sent} ta, bloklaganlar: {failed} ta.",
-                level=messages.SUCCESS
-            )
-        else:
-            self.message_user(
-                request,
-                f"⚠️ '{msg.title}' yuborishda xatolik yuz berdi. Xatoliklar: {', '.join(errors[:3])}",
-                level=messages.ERROR
-            )
-        return redirect('admin:api_broadcastmessage_changelist')
-
-    def send_broadcast_action(self, request, queryset):
-        total_sent = 0
-        total_failed = 0
-
-        for msg in queryset:
             # Filter audience
             if msg.target_audience == 'active':
                 users = TelegramUser.objects.filter(attempts__isnull=False).distinct()
@@ -691,23 +648,25 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
             else:
                 users = TelegramUser.objects.all()
 
-            if not users.exists():
-                audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
-                self.message_user(
-                    request,
-                    f"'{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. O'tkazib yuborildi.",
-                    level=messages.WARNING
-                )
-                continue
+            count = users.count()
+            if count == 0:
+                if msg.target_audience == 'selected':
+                    warn_text = f"Xatolik: '{msg.title}' uchun birorta ham foydalanuvchi tanlanmagan! Iltimos, xabarni ochib, 'Tanlangan foydalanuvchilar' ro'yxatidan odamlarni tanlab saqlang."
+                else:
+                    audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
+                    warn_text = f"Diqqat: '{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. Xabar yuborilmadi. Agar xabarni barcha bot foydalanuvchilariga yubormoqchi bo'lsangiz, Auditoriyani 'Barcha foydalanuvchilar'ga o'zgartirib saqlang."
+                self.message_user(request, warn_text, level=messages.WARNING)
+                return redirect('admin:api_broadcastmessage_changelist')
 
             msg.status = 'sending'
             msg.save()
 
-            photo_file = msg.photo.file if msg.photo else None
+            photo_bytes, photo_name = get_broadcast_photo_data(msg)
             sent, failed, errors = broadcast_to_users(
                 user_qs=users,
-                text=msg.message_text,
-                photo=photo_file,
+                text=msg.message_text or "",
+                photo=photo_bytes,
+                photo_name=photo_name,
                 button_text=msg.button_text,
                 button_url=msg.button_url
             )
@@ -720,12 +679,88 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
                 msg.error_summary = "\n".join(errors[:20])
             msg.save()
 
-            total_sent += sent
-            total_failed += failed
+            if sent > 0:
+                self.message_user(
+                    request,
+                    f"🎉 '{msg.title}' xabarnomasi muvaffaqiyatli yuborildi! Jami yetkazildi: {sent} ta, bloklaganlar: {failed} ta.",
+                    level=messages.SUCCESS
+                )
+            else:
+                err_str = f"Xatoliklar: {', '.join(errors[:3])}" if errors else "Foydalanuvchilar botni bloklagan bo'lishi mumkin."
+                self.message_user(
+                    request,
+                    f"⚠️ '{msg.title}' yuborishda muammo: {err_str}",
+                    level=messages.ERROR
+                )
+            return redirect('admin:api_broadcastmessage_changelist')
+        except Exception as e:
+            logger.exception(f"Xabarnoma yuborishda xatolik: {e}")
+            self.message_user(
+                request,
+                f"Xabarnoma yuborishda kutilmagan xatolik yuz berdi: {str(e)}",
+                level=messages.ERROR
+            )
+            return redirect('admin:api_broadcastmessage_changelist')
 
-        self.message_user(
-            request,
-            f"Xabarnoma yakunlandi! Jami yetkazildi: {total_sent} ta, Yetib bormadi (bloklaganlar): {total_failed} ta."
-        )
+    def send_broadcast_action(self, request, queryset):
+        try:
+            total_sent = 0
+            total_failed = 0
+
+            for msg in queryset:
+                # Filter audience
+                if msg.target_audience == 'active':
+                    users = TelegramUser.objects.filter(attempts__isnull=False).distinct()
+                elif msg.target_audience == 'inactive':
+                    users = TelegramUser.objects.filter(attempts__isnull=True)
+                elif msg.target_audience == 'selected':
+                    users = msg.selected_users.all()
+                else:
+                    users = TelegramUser.objects.all()
+
+                if not users.exists():
+                    audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
+                    self.message_user(
+                        request,
+                        f"'{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. O'tkazib yuborildi.",
+                        level=messages.WARNING
+                    )
+                    continue
+
+                msg.status = 'sending'
+                msg.save()
+
+                photo_bytes, photo_name = get_broadcast_photo_data(msg)
+                sent, failed, errors = broadcast_to_users(
+                    user_qs=users,
+                    text=msg.message_text or "",
+                    photo=photo_bytes,
+                    photo_name=photo_name,
+                    button_text=msg.button_text,
+                    button_url=msg.button_url
+                )
+
+                msg.sent_count = sent
+                msg.failed_count = failed
+                msg.status = 'sent' if (sent > 0 or failed == 0) else 'failed'
+                msg.sent_at = timezone.now()
+                if errors:
+                    msg.error_summary = "\n".join(errors[:20])
+                msg.save()
+
+                total_sent += sent
+                total_failed += failed
+
+            self.message_user(
+                request,
+                f"Xabarnoma yakunlandi! Jami yetkazildi: {total_sent} ta, Yetib bormadi (bloklaganlar): {total_failed} ta."
+            )
+        except Exception as e:
+            logger.exception(f"Ommaviy xabarnomada xatolik: {e}")
+            self.message_user(
+                request,
+                f"Ommaviy xabarnoma yuborishda xatolik yuz berdi: {str(e)}",
+                level=messages.ERROR
+            )
 
     send_broadcast_action.short_description = "📨 Tanlangan xabarnomalarni foydalanuvchilarga yuborish"
