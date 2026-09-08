@@ -35,10 +35,9 @@ JAZZMIN_SETTINGS = {
     "site_header": "Qur'on Murabbiy",
     "site_brand": "Qur'on Murabbiy",
     "site_logo": "images/logo.jpg",
-    "login_logo": "images/logo.jpg",
-    "login_logo_dark": "images/logo.jpg",
     "site_logo_classes": "img-circle elevation-2",
     "site_icon": "images/logo.jpg",
+    "custom_css": "css/custom_admin.css",
     "welcome_sign": "Qur'on Tilovat Murabbiyi Boshqaruv Paneliga Xush Kelibsiz",
     "copyright": "Qur'on Tilovat Murabbiyi © 2026",
     "search_model": ["api.TelegramUser", "api.Surah"],
@@ -130,7 +129,7 @@ ROOT_URLCONF = 'quran_tutor.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.parent / 'webapp'],
+        'DIRS': [BASE_DIR / 'templates', BASE_DIR.parent / 'webapp'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

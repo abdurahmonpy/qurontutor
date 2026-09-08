@@ -1,6 +1,7 @@
 #!/bin/bash
 export PATH="/opt/venv/bin:$PATH"
 
+mkdir -p backend/media
 echo "==> Running database migrations..."
 python backend/manage.py migrate --noinput || true
 

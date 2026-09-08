@@ -1,0 +1,164 @@
+{% load i18n static jazzmin admin_urls %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"uz" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>{% block title %}{{ title }} | {{ jazzmin_settings.site_title }}{% endblock %}</title>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="{% static "vendor/fontawesome-free/css/all.min.css" %}">
+
+    <!-- Bootstrap and adminLTE -->
+    <link rel="stylesheet" href="{% static "vendor/adminlte/css/adminlte.min.css" %}">
+
+    <!-- Bootswatch theme -->
+    {% if jazzmin_ui.theme.name != 'default' %}
+        <link rel="stylesheet" href="{{ jazzmin_ui.theme.src }}" id="jazzmin-theme" />
+    {% endif %}
+
+    <!-- Custom fixes for django -->
+    <link rel="stylesheet" href="{% static "jazzmin/css/main.css" %}">
+
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="{% static "css/custom_admin.css" %}">
+
+    <!-- favicons -->
+    <link rel="shortcut icon" href="{% static jazzmin_settings.site_icon %}" type="image/jpeg">
+    <link rel="icon" href="{% static jazzmin_settings.site_icon %}" sizes="32x32" type="image/jpeg">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body.login-page {
+            background: radial-gradient(circle at center, #064e3b 0%, #022c22 65%, #011a13 100%) !important;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 24px 16px;
+        }
+        .login-box {
+            width: 420px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 22px;
+        }
+        .login-logo img {
+            width: 96px;
+            height: 96px;
+            max-width: 96px;
+            max-height: 96px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
+            margin: 0 auto 12px auto;
+            display: block;
+        }
+        .login-logo a {
+            color: #fbbf24 !important;
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+            text-decoration: none;
+            display: block;
+        }
+        .login-box .card {
+            background: rgba(15, 23, 42, 0.92) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px !important;
+            border: 1px solid rgba(245, 158, 11, 0.35) !important;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7) !important;
+            overflow: hidden;
+        }
+        .login-box .card-body {
+            padding: 28px 24px !important;
+        }
+        .login-box-msg {
+            color: #cbd5e1 !important;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-align: center;
+            margin-bottom: 20px !important;
+        }
+        .input-group {
+            margin-bottom: 18px !important;
+        }
+        .input-group .form-control {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border: 1px solid #334155 !important;
+            color: #ffffff !important;
+            height: 48px;
+            border-radius: 10px 0 0 10px !important;
+            font-size: 14px;
+        }
+        .input-group .form-control:focus {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3) !important;
+        }
+        .input-group .input-group-text {
+            background: rgba(30, 41, 59, 0.95) !important;
+            border: 1px solid #334155 !important;
+            border-left: none !important;
+            color: #f59e0b !important;
+            border-radius: 0 10px 10px 0 !important;
+            width: 48px;
+            justify-content: center;
+        }
+        .btn-primary, .btn[type="submit"] {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+            border: none !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            font-size: 15px !important;
+            border-radius: 10px !important;
+            height: 48px !important;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4) !important;
+            transition: all 0.25s ease !important;
+            cursor: pointer;
+        }
+        .btn-primary:hover, .btn[type="submit"]:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 22px rgba(217, 119, 6, 0.6) !important;
+        }
+    </style>
+</head>
+<body class="login-page">
+
+<div class="login-box">
+    <div class="login-logo">
+        <img src="{% static jazzmin_settings.site_logo %}" alt="{{ jazzmin_settings.site_header }}">
+        <a href="{% url 'admin:index' %}"><b>{{ jazzmin_settings.site_header }}</b></a>
+    </div>
+
+    <div class="card">
+        <div class="card-body login-card-body">
+            {% block content %} {% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="{% static "admin/js/vendor/jquery/jquery.js" %}"></script>
+<!-- Bootstrap 5 -->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- AdminLTE App -->
+<script src="{% static 'vendor/adminlte/js/adminlte.min.js' %}"></script>
+
+</body>
+</html>

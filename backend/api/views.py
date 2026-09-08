@@ -179,6 +179,13 @@ class RecitationCheckView(views.APIView):
         if telegram_id:
             user, _ = TelegramUser.objects.get_or_create(telegram_id=telegram_id)
 
+        # Ensure audio_file stream is rewinded so all bytes are written to storage
+        if audio_file:
+            try:
+                audio_file.seek(0)
+            except Exception:
+                pass
+
         # Save recitation attempt
         attempt = RecitationAttempt.objects.create(
             user=user,

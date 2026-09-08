@@ -166,15 +166,33 @@ class RecitationAttemptAdmin(admin.ModelAdmin):
 
     def audio_playback(self, obj):
         if obj.audio_file:
-            return format_html(
-                '<audio controls style="height: 32px; width: 200px;"><source src="{}" type="audio/webm"></audio>',
-                obj.audio_file.url
-            )
+            try:
+                url = obj.audio_file.url
+                return format_html(
+                    '<audio controls preload="none" style="height: 32px; width: 220px;" src="{}">'
+                    'Brauzeringiz audioni qo\'llab-quvvatlamaydi</audio>',
+                    url
+                )
+            except Exception:
+                return "-"
         return "-"
     audio_playback.short_description = "Foydalanuvchi Audiosi"
 
     def audio_playback_detail(self, obj):
-        return self.audio_playback(obj)
+        if obj.audio_file:
+            try:
+                url = obj.audio_file.url
+                return format_html(
+                    '<div style="display: flex; flex-direction: column; gap: 8px;">'
+                    '<audio controls style="height: 36px; width: 300px;" src="{}"></audio>'
+                    '<a href="{}" target="_blank" download style="color: #d97706; font-weight: 600; font-size: 13px;">'
+                    '📥 Audio faylni yuklab olish</a>'
+                    '</div>',
+                    url, url
+                )
+            except Exception:
+                return "-"
+        return "-"
     audio_playback_detail.short_description = "Yozilgan Audio"
 
     def formatted_word_results(self, obj):

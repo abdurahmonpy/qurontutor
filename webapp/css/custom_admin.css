@@ -1,0 +1,145 @@
+/* =========================================================
+   Qur'on Tilovat Murabbiyi - Luxury Admin Custom CSS
+   Dark Emerald & Gold Theme
+   ========================================================= */
+
+/* Brand & Navbar */
+.main-header {
+    border-bottom: 1px solid rgba(217, 119, 6, 0.25) !important;
+}
+
+.brand-link {
+    border-bottom: 1px solid rgba(217, 119, 6, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.brand-image, .site-logo {
+    max-height: 36px !important;
+    width: 36px !important;
+    height: 36px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    border: 2px solid #f59e0b !important;
+    margin-right: 10px !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Sidebar Styling */
+.main-sidebar {
+    border-right: 1px solid rgba(217, 119, 6, 0.2) !important;
+}
+
+.sidebar .nav-link.active {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35) !important;
+}
+
+.sidebar .nav-link:hover:not(.active) {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #fbbf24 !important;
+    border-radius: 8px !important;
+}
+
+/* Tables & Cards */
+.card {
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-weight: 600 !important;
+}
+
+.table thead th {
+    background-color: rgba(30, 41, 59, 0.8) !important;
+    color: #fbbf24 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    border-top: none !important;
+}
+
+/* Badges */
+.badge-warning {
+    background-color: #d97706 !important;
+    color: #ffffff !important;
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4) !important;
+}
+
+/* Login Page Fallback Styles */
+.login-page {
+    background: radial-gradient(circle at center, #064e3b 0%, #022c22 65%, #011a13 100%) !important;
+}
+
+.login-box {
+    width: 420px !important;
+    max-width: 95vw !important;
+    margin: 0 auto !important;
+}
+
+.login-logo {
+    text-align: center !important;
+    margin-bottom: 20px !important;
+}
+
+.login-logo img {
+    width: 96px !important;
+    height: 96px !important;
+    max-width: 96px !important;
+    max-height: 96px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 3px solid #f59e0b !important;
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.4) !important;
+    margin: 0 auto 10px auto !important;
+    display: block !important;
+}
+
+.login-logo a {
+    color: #fbbf24 !important;
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
+    text-decoration: none !important;
+}
+
+.login-box .card {
+    background: rgba(15, 23, 42, 0.9) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7) !important;
+}
+
+.login-box .card-body {
+    padding: 28px 24px !important;
+}
+
+.login-box-msg {
+    color: #cbd5e1 !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    text-align: center !important;
+    margin-bottom: 20px !important;
+}
