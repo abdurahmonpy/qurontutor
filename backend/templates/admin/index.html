@@ -1,0 +1,194 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static jazzmin admin_stats %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+{% get_dashboard_kpis as kpi %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content_title %} {% trans 'Dashboard' %} {% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item">{% trans 'Dashboard' %}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <!-- KPI Summary Row -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <!-- Total Users -->
+            <div class="col-xl-3 col-md-6 col-12 mb-3">
+                <div class="card h-100 border-0" style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); border-radius: 16px; box-shadow: 0 4px 15px rgba(4, 120, 87, 0.25);">
+                    <div class="card-body p-3 text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-white-50 text-uppercase font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Jami Foydalanuvchilar</span>
+                                <h3 class="font-weight-bold mb-0 mt-1">{{ kpi.total_users }} <small style="font-size: 14px;">qori</small></h3>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.15); width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-users fa-lg text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top border-white-50" style="font-size: 12px;">
+                            <a href="{% url 'admin:api_telegramuser_changelist' %}" class="text-white font-weight-bold text-decoration-none">
+                                Foydalanuvchilar ro'yxati <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Recitations -->
+            <div class="col-xl-3 col-md-6 col-12 mb-3">
+                <div class="card h-100 border-0" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: 16px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);">
+                    <div class="card-body p-3 text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-white-50 text-uppercase font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Jami Tilovatlar</span>
+                                <h3 class="font-weight-bold mb-0 mt-1">{{ kpi.total_attempts }} <small style="font-size: 14px;">marta</small></h3>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.15); width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-microphone-alt fa-lg text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top border-white-50" style="font-size: 12px;">
+                            <a href="{% url 'admin:api_recitationattempt_changelist' %}" class="text-white font-weight-bold text-decoration-none">
+                                Tilovarlarni tinglash <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Accuracy -->
+            <div class="col-xl-3 col-md-6 col-12 mb-3">
+                <div class="card h-100 border-0" style="background: linear-gradient(135deg, #b45309 0%, #d97706 100%); border-radius: 16px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.25);">
+                    <div class="card-body p-3 text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-white-50 text-uppercase font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">O'rtacha Ball</span>
+                                <h3 class="font-weight-bold mb-0 mt-1">{{ kpi.avg_score }}%</h3>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.15); width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-star fa-lg text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top border-white-50" style="font-size: 12px;">
+                            <span class="text-white-50">{{ kpi.excellent_count }} ta a'lo tilovat</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Broadcast Messages -->
+            <div class="col-xl-3 col-md-6 col-12 mb-3">
+                <div class="card h-100 border-0" style="background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%); border-radius: 16px; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25);">
+                    <div class="card-body p-3 text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-white-50 text-uppercase font-weight-bold" style="font-size: 11px; letter-spacing: 0.5px;">Xabarnomalar</span>
+                                <h3 class="font-weight-bold mb-0 mt-1">{{ kpi.total_broadcasts }} <small style="font-size: 14px;">ta</small></h3>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.15); width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-paper-plane fa-lg text-white"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top border-white-50" style="font-size: 12px;">
+                            <a href="{% url 'admin:api_broadcastmessage_add' %}" class="text-white font-weight-bold text-decoration-none">
+                                + Yangi Xabar Yuborish <i class="fas fa-plus-circle ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% get_side_menu using="app_list" as dashboard_list %}
+    {% if dashboard_list %}
+        {% widthratio dashboard_list|length 2 1 as middle %}
+    {% endif %}
+
+    <div class="col-lg-9 col-12">
+        <div class="row">
+            <div class="col-md-6 col-sm-12">
+                {% for app in dashboard_list %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="m-0 font-weight-bold">{{ app.name }}</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <tbody>
+                                {% for model in app.models %}
+                                    <tr>
+                                        <td class="p-3">
+                                            {% if model.url %}<a href="{{ model.url }}" class="font-weight-bold">{{ model.name }}</a>{% else %}{{ model.name }}{% endif %}
+                                        </td>
+                                        <td class="p-3 text-end">
+                                            <div class="btn-group">
+                                                {% if model.add_url %}
+                                                    <a href="{{ model.add_url }}" class="btn btn-sm btn-outline-success">Qo'shish</a>
+                                                {% endif %}
+                                                {% if model.url %}
+                                                    <a href="{{ model.url }}" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if forloop.counter == middle|add:"0" %}
+                    </div>
+                    <div class="col-md-6 col-sm-12">
+                    {% endif %}
+
+                {% endfor %}
+                </div>
+        </div>
+
+    </div>
+    <div class="col-lg-3 col-12">
+        <div id="content-related">
+            <div class="module" id="recent-actions-module">
+                <h5 class="mb-3 font-weight-bold">{% trans 'Recent actions' %}</h5>
+                {% load log %}
+                {% get_admin_log 6 as admin_log for_user user %}
+                {% if not admin_log %}
+                    <p class="text-muted">{% trans 'None available' %}</p>
+                {% else %}
+                    <div class="timeline">
+                        {% for entry in admin_log %}
+                            <div>
+                                {% if entry.is_change %}
+                                    <i class="fas fa-edit bg-warning text-xs"></i>
+                                {% elif entry.is_deletion %}
+                                    <i class="fas fa-trash bg-danger text-xs"></i>
+                                {% elif entry.is_addition %}
+                                    <i class="fas fa-plus-circle bg-success text-xs"></i>
+                                {% endif %}
+
+                                <div class="timeline-item">
+                                    <span class="time"><i class="fas fa-clock"></i> {% blocktrans with timesince=entry.action_time|timesince %}{{ timesince }} ago{% endblocktrans %}</span>
+                                    <h3 class="timeline-header no-border">
+                                        {% if entry.is_deletion or not entry.get_admin_url %}
+                                            {{ entry.object_repr }}
+                                        {% else %}
+                                            <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                                        {% endif %}
+                                    </h3>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -40,7 +40,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "css/custom_admin.css",
     "welcome_sign": "Qur'on Tilovat Murabbiyi Boshqaruv Paneliga Xush Kelibsiz",
     "copyright": "Qur'on Tilovat Murabbiyi © 2026",
-    "search_model": ["api.TelegramUser", "api.Surah"],
+    "search_model": ["api.TelegramUser", "api.Surah", "api.BroadcastMessage"],
     "user_avatar": None,
     "topmenu_links": [
         {"name": "Boshqaruv", "url": "admin:index", "permissions": ["auth.view_user"]},
@@ -54,6 +54,7 @@ JAZZMIN_SETTINGS = {
         "auth.user": "fas fa-user-shield",
         "auth.Group": "fas fa-users",
         "api.TelegramUser": "fas fa-user-graduate",
+        "api.BroadcastMessage": "fas fa-paper-plane",
         "api.Surah": "fas fa-quran",
         "api.Ayah": "fas fa-book-open",
         "api.RecitationAttempt": "fas fa-microphone-alt",
@@ -210,3 +211,6 @@ REST_FRAMEWORK = {
 
 # Quran ASR Microservice endpoint
 ASR_SERVICE_URL = os.getenv("ASR_SERVICE_URL", "http://127.0.0.1:8001")
+
+# Telegram Bot Token for admin notifications and broadcasts
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")

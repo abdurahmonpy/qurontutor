@@ -77,3 +77,40 @@ class UserProgress(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.ayah} ({self.status} / {self.best_score}%)"
+
+
+class BroadcastMessage(models.Model):
+    TARGET_CHOICES = (
+        ('all', 'Barcha foydalanuvchilar'),
+        ('active', 'Faol qorilar (kamida 1 tilovat qilganlar)'),
+        ('inactive', 'Hali tilovat topshirmaganlar'),
+    )
+
+    STATUS_CHOICES = (
+        ('draft', 'Qoralama (Yuborilmagan)'),
+        ('sending', 'Yuborilmoqda...'),
+        ('sent', 'Muvaffaqiyatli yuborildi'),
+        ('failed', 'Xatolik bilan tugadi'),
+    )
+
+    title = models.CharField(max_length=255, help_text="Xabarnoma ichki nomi (admin uchun)")
+    message_text = models.TextField(help_text="Xabar matni (HTML formatida: <b>qalin</b>, <i>kursiv</i>, {name} shaxsiy ism)")
+    photo = models.ImageField(upload_to='broadcasts/%Y/%m/', null=True, blank=True, help_text="Xabarga qo'shiladigan rasm (ixtiyoriy)")
+    button_text = models.CharField(max_length=100, blank=True, default='', help_text="Inline tugma yozuvi (masalan: 📖 Tilovatni Boshlash)")
+    button_url = models.URLField(max_length=500, blank=True, default='', help_text="Tugma bosilganda ochiladigan havola")
+    target_audience = models.CharField(max_length=20, choices=TARGET_CHOICES, default='all', help_text="Xabar kimlarga yetkazilsin?")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    sent_count = models.PositiveIntegerField(default=0, help_text="Yetkazilganlar soni")
+    failed_count = models.PositiveIntegerField(default=0, help_text="Yetib bormaganlar soni")
+    error_summary = models.TextField(blank=True, default='', help_text="Xatolik tafsilotlari")
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Ommaviy Xabarnoma"
+        verbose_name_plural = "Ommaviy Xabarnomalar"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} [{self.get_status_display()}]"
+
