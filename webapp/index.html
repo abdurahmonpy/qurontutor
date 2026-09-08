@@ -120,19 +120,35 @@
       <!-- Asosiy Oyat Kartasi -->
       <div class="ayah-practice-card p-5 sm:p-6 mb-4 bg-white rounded-3xl border-t-4 border-[#D97706] shadow-sm">
         
-        <!-- Karta Tepa Qismi: Oyat Nishoni & Audio Tinglash -->
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-1.5 bg-[#D97706] text-white text-[11px] font-bold px-3 py-1 rounded-xl shadow-sm">
+        <!-- Karta Tepa Qismi: Oyat Nishoni, Qori Tanlash & Audio Tinglash -->
+        <div class="flex items-center justify-between mb-3 gap-2">
+          <div class="flex items-center gap-1.5 bg-[#D97706] text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-sm shrink-0">
             <span>📖</span>
             <span id="cardAyahBadge">1-oyat</span>
           </div>
 
-          <button id="btnPlayOfficialAudio" class="w-9 h-9 rounded-full bg-[#FEF3C7] hover:bg-amber-200 text-[#D97706] flex items-center justify-center transition shadow-sm active:scale-95" title="Qorini tinglash">
-            <svg id="playAudioIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-            </svg>
-            <span id="audioPlayingAnimation" class="hidden text-xs font-bold animate-pulse">❚❚</span>
-          </button>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <!-- Qori Tanlagich -->
+            <div class="relative min-w-0">
+              <select id="reciterSelect" class="appearance-none bg-amber-50 hover:bg-amber-100/80 text-amber-950 border border-amber-200/80 rounded-xl pl-2.5 pr-6 py-1.5 text-[11px] font-bold cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-[150px] sm:max-w-none truncate" title="Qorini tanlang">
+                <option value="husary_muallim" selected>🎙️ Al-Xusoriy (Muallim)</option>
+                <option value="husary">🎙️ Al-Xusoriy (Murattal)</option>
+                <option value="alafasy">🎙️ Mishariy Al-Afasiy</option>
+                <option value="abdulbasit">🎙️ Abdulbosit Abdussamad</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-amber-700">
+                <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+              </div>
+            </div>
+
+            <!-- Eshitish Tugmasi -->
+            <button id="btnPlayOfficialAudio" class="w-9 h-9 shrink-0 rounded-full bg-[#FEF3C7] hover:bg-amber-200 text-[#D97706] flex items-center justify-center transition shadow-sm active:scale-95" title="Qorini tinglash">
+              <svg id="playAudioIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+              </svg>
+              <span id="audioPlayingAnimation" class="hidden text-xs font-bold animate-pulse">❚❚</span>
+            </button>
+          </div>
         </div>
 
         <!-- Audio element -->

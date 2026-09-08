@@ -28,6 +28,7 @@ class AyahSerializer(serializers.ModelSerializer):
     transliteration = serializers.CharField(source='text_translit', read_only=True)
     translation_uz = serializers.CharField(source='text_translation_uz', read_only=True)
     audio_url = serializers.CharField(source='official_audio_url', read_only=True)
+    reciters_audio = serializers.SerializerMethodField()
 
     class Meta:
         model = Ayah
@@ -36,9 +37,22 @@ class AyahSerializer(serializers.ModelSerializer):
             'text_arabic_tajweed', 'text_arabic_clean',
             'text_translit', 'transliteration',
             'text_translation_uz', 'translation_uz',
-            'official_audio_url', 'audio_url',
+            'official_audio_url', 'audio_url', 'reciters_audio',
             'user_status', 'best_score'
         ]
+
+    def get_reciters_audio(self, obj):
+        try:
+            surah_num = obj.surah.number
+        except Exception:
+            surah_num = 1
+        code = f"{surah_num:03d}{obj.number_in_surah:03d}"
+        return {
+            'husary_muallim': f"https://everyayah.com/data/Husary_Muallim_128kbps/{code}.mp3",
+            'husary': f"https://everyayah.com/data/Husary_128kbps/{code}.mp3",
+            'alafasy': f"https://everyayah.com/data/Alafasy_128kbps/{code}.mp3",
+            'abdulbasit': f"https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/{code}.mp3",
+        }
 
     def get_user_status(self, obj):
         user_id = self.context.get('telegram_id')

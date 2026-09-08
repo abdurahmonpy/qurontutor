@@ -149,7 +149,27 @@
   const practiceSurahName = document.getElementById('practiceSurahName');
   const practiceSurahArabic = document.getElementById('practiceSurahArabic');
 
+  const RECITERS = {
+    husary_muallim: {
+      name: 'Mahmud Xalil al-Xusoriy (Muallim)',
+      getUrl: (s, a) => `https://everyayah.com/data/Husary_Muallim_128kbps/${String(s).padStart(3, '0')}${String(a).padStart(3, '0')}.mp3`
+    },
+    husary: {
+      name: 'Mahmud Xalil al-Xusoriy (Murattal)',
+      getUrl: (s, a) => `https://everyayah.com/data/Husary_128kbps/${String(s).padStart(3, '0')}${String(a).padStart(3, '0')}.mp3`
+    },
+    alafasy: {
+      name: 'Mishariy Roshid al-Afasiy',
+      getUrl: (s, a) => `https://everyayah.com/data/Alafasy_128kbps/${String(s).padStart(3, '0')}${String(a).padStart(3, '0')}.mp3`
+    },
+    abdulbasit: {
+      name: 'Abdulbosit Abdussamad (Murattal)',
+      getUrl: (s, a) => `https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/${String(s).padStart(3, '0')}${String(a).padStart(3, '0')}.mp3`
+    }
+  };
+
   const cardAyahBadge = document.getElementById('cardAyahBadge');
+  const reciterSelect = document.getElementById('reciterSelect');
   const btnPlayOfficialAudio = document.getElementById('btnPlayOfficialAudio');
   const playAudioIcon = document.getElementById('playAudioIcon');
   const audioPlayingAnimation = document.getElementById('audioPlayingAnimation');
@@ -271,6 +291,21 @@
         displayCurrentAyah();
       }
     });
+
+    if (reciterSelect) {
+      const savedReciter = localStorage.getItem('quran_tutor_reciter') || 'husary_muallim';
+      reciterSelect.value = savedReciter;
+
+      reciterSelect.addEventListener('change', (e) => {
+        localStorage.setItem('quran_tutor_reciter', e.target.value);
+        const wasPlaying = state.isPlayingAudio;
+        stopAudioPlayback();
+        updateReciterAudioSource();
+        if (wasPlaying) {
+          toggleOfficialAudio();
+        }
+      });
+    }
 
     btnPlayOfficialAudio.addEventListener('click', toggleOfficialAudio);
     officialAudioElement.addEventListener('ended', onOfficialAudioEnded);
@@ -415,6 +450,33 @@
     }
   }
 
+  function getReciterAudioUrl(ayah) {
+    if (!ayah) return '';
+    const selected = localStorage.getItem('quran_tutor_reciter') || (reciterSelect ? reciterSelect.value : 'husary_muallim');
+    const reciterConfig = RECITERS[selected] || RECITERS.husary_muallim;
+
+    if (ayah.reciters_audio && ayah.reciters_audio[selected]) {
+      return ayah.reciters_audio[selected];
+    }
+
+    const surahNum = state.currentSurah?.number || state.currentSurah?.id || 1;
+    const ayahNum = ayah.ayah_number || ayah.number_in_surah || (state.currentAyahIndex + 1);
+    return reciterConfig.getUrl(surahNum, ayahNum);
+  }
+
+  function updateReciterAudioSource() {
+    const ayah = state.ayahs[state.currentAyahIndex];
+    if (!ayah) return;
+    const audioSrc = getReciterAudioUrl(ayah);
+    if (audioSrc) {
+      officialAudioElement.src = audioSrc;
+      btnPlayOfficialAudio.classList.remove('opacity-50', 'pointer-events-none');
+    } else {
+      officialAudioElement.removeAttribute('src');
+      btnPlayOfficialAudio.classList.add('opacity-50', 'pointer-events-none');
+    }
+  }
+
   function displayCurrentAyah() {
     stopAudioPlayback();
     if (state.isRecording) cancelRecording();
@@ -452,15 +514,8 @@
     translitContainer.textContent = ayah.transliteration || ayah.text_translit || "Bismillahir Rohmanir Rohiym";
     translationContainer.textContent = ayah.translation_uz || ayah.text_translation_uz || ayah.translation_en || "Mehribon va rahmli Allohning nomi ila boshlayman.";
 
-    // Setup Official Audio
-    const audioSrc = ayah.audio_url || ayah.official_audio_url;
-    if (audioSrc) {
-      officialAudioElement.src = audioSrc;
-      btnPlayOfficialAudio.classList.remove('opacity-50', 'pointer-events-none');
-    } else {
-      officialAudioElement.removeAttribute('src');
-      btnPlayOfficialAudio.classList.add('opacity-50', 'pointer-events-none');
-    }
+    // Setup Selected Reciter Audio
+    updateReciterAudioSource();
 
     btnPrevAyah.classList.toggle('opacity-30', state.currentAyahIndex === 0);
     btnPrevAyah.classList.toggle('pointer-events-none', state.currentAyahIndex === 0);
