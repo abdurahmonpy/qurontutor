@@ -52,16 +52,23 @@ class TelegramUserAdmin(admin.ModelAdmin):
     current_location.short_description = "Hozirgi Oyat"
 
     def attempts_count_display(self, obj):
-        count = obj.attempts.count()
-        return format_html('<b>{} ta</b> urinish', count)
+        try:
+            count = obj.attempts.count()
+            return format_html('<b>{} ta</b> urinish', count)
+        except Exception:
+            return "0 ta"
     attempts_count_display.short_description = "Tilovatlar"
 
     def avg_score_display(self, obj):
-        avg = obj.attempts.aggregate(Avg('score'))['score__avg']
-        if avg is not None:
-            color = "#15803d" if avg >= 80 else "#b45309" if avg >= 60 else "#b91c1c"
-            return format_html('<span style="color: {}; font-weight: bold;">{:.1f}%</span>', color, avg)
-        return "-"
+        try:
+            avg = obj.attempts.aggregate(Avg('score'))['score__avg']
+            if avg is not None:
+                color = "#15803d" if avg >= 80 else "#b45309" if avg >= 60 else "#b91c1c"
+                formatted_avg = f"{float(avg):.1f}%"
+                return format_html('<span style="color: {}; font-weight: bold;">{}</span>', color, formatted_avg)
+            return "-"
+        except Exception:
+            return "-"
     avg_score_display.short_description = "O'rtacha Ball"
 
 

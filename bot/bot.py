@@ -145,7 +145,33 @@ async def main():
 
     bot = Bot(token=BOT_TOKEN, session=session)
     logger.info("Starting Telegram Bot...")
-    await dp.start_polling(bot)
+
+    try:
+        # Reset any leftover webhook and drop old updates
+        await bot.delete_webhook(drop_pending_updates=True)
+    except Exception as e:
+        logger.warning(f"Could not delete webhook: {e}")
+
+    # Retry loop with backoff for polling in case previous container instance is terminating
+    max_retries = 10
+    retry_delay = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(f"Connecting bot polling (attempt {attempt}/{max_retries})...")
+            await dp.start_polling(bot, drop_pending_updates=True)
+            break
+        except Exception as e:
+            err_name = type(e).__name__
+            if "Conflict" in str(e) or "Conflict" in err_name:
+                logger.warning(
+                    f"Telegram conflict detected: previous bot instance is shutting down. "
+                    f"Retrying in {retry_delay}s (attempt {attempt}/{max_retries})..."
+                )
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 1.5, 10)
+            else:
+                logger.error(f"Fatal error in bot polling: {e}")
+                raise e
 
 if __name__ == "__main__":
     asyncio.run(main())
