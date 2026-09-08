@@ -1,6 +1,8 @@
 import csv
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.http import HttpResponse
+from django.urls import path, reverse
+from django.shortcuts import redirect, get_object_or_404
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.db.models import Avg, Count
@@ -400,11 +402,11 @@ class UserProgressAdmin(admin.ModelAdmin):
 class BroadcastMessageAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'target_badge', 'status_badge',
-        'sent_count_display', 'created_at', 'sent_at'
+        'sent_count_display', 'created_at', 'sent_at', 'quick_send_button'
     )
     list_filter = ('status', 'target_audience', 'created_at')
     search_fields = ('title', 'message_text')
-    readonly_fields = ('sent_count', 'failed_count', 'error_summary', 'sent_at', 'created_at', 'message_preview')
+    readonly_fields = ('send_action_panel', 'sent_count', 'failed_count', 'error_summary', 'sent_at', 'created_at', 'message_preview')
     actions = ['send_broadcast_action']
 
     fieldsets = (
@@ -416,9 +418,8 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
             'fields': ('button_text', 'button_url'),
             'description': "Xabar ostiga Telegram inline tugmasi joylashtirish mumkin."
         }),
-        ("Xabar Ko'rinishi va Statistika", {
-            'fields': ('message_preview', 'status', 'sent_count', 'failed_count', 'sent_at', 'created_at', 'error_summary'),
-            'classes': ('collapse',)
+        ("Xabarni Yuborish & Ko'rinishi", {
+            'fields': ('send_action_panel', 'message_preview', 'status', 'sent_count', 'failed_count', 'sent_at', 'created_at', 'error_summary'),
         }),
     )
 
@@ -458,6 +459,75 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
         )
     sent_count_display.short_description = "Yetkazildi / Xatolik"
 
+    def quick_send_button(self, obj):
+        if not obj or not obj.pk:
+            return "-"
+        send_url = reverse('admin:api_broadcastmessage_send', args=[obj.pk])
+        if obj.status == 'draft':
+            return format_html(
+                '<a class="button" href="{}" onclick="return confirm(\'Ushbu xabarnoma tanlangan auditoriyadagi foydalanuvchilarga yuborilsinmi?\');" style="background: #16a34a; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; text-decoration: none; display: inline-block; white-space: nowrap;">🚀 Yuborish</a>',
+                send_url
+            )
+        elif obj.status == 'sending':
+            return format_html('<span style="color: #0284c7; font-weight: bold; font-size: 11px;">⏳ Yuborilmoqda...</span>')
+        elif obj.status == 'sent':
+            return format_html(
+                '<a class="button" href="{}" onclick="return confirm(\'Xabar allaqachon yuborilgan. Qayta yuborilsinmi?\');" style="background: #0284c7; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; text-decoration: none; display: inline-block; white-space: nowrap;">🔁 Qayta yuborish</a>',
+                send_url
+            )
+        elif obj.status == 'failed':
+            return format_html(
+                '<a class="button" href="{}" onclick="return confirm(\'Qayta urinish boshlansinmi?\');" style="background: #dc2626; color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; text-decoration: none; display: inline-block; white-space: nowrap;">⚠️ Qayta urinish</a>',
+                send_url
+            )
+        return "-"
+    quick_send_button.short_description = "Tezkor Yuborish"
+
+    def send_action_panel(self, obj):
+        if not obj or not obj.pk:
+            return "Avval xabarni saqlang, so'ng yuborishingiz mumkin bo'ladi."
+        send_url = reverse('admin:api_broadcastmessage_send', args=[obj.pk])
+        
+        target_name = dict(BroadcastMessage.TARGET_CHOICES).get(obj.target_audience, obj.target_audience)
+        
+        # Audience count preview
+        if obj.target_audience == 'active':
+            target_count = TelegramUser.objects.filter(attempts__isnull=False).distinct().count()
+        elif obj.target_audience == 'inactive':
+            target_count = TelegramUser.objects.filter(attempts__isnull=True).count()
+        else:
+            target_count = TelegramUser.objects.count()
+
+        btn_text = "🚀 Xabarnomani Hozir Yuborish" if obj.status == 'draft' else "🔁 Xabarnomani Qayta Yuborish"
+        bg_color = "#16a34a" if obj.status == 'draft' else "#0284c7"
+        
+        if target_count == 0:
+            info_html = (
+                f'<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">'
+                f'⚠️ Tanlangan auditoriyada (<b>{target_name}</b>) hozircha <b>0 ta</b> foydalanuvchi mavjud. Agar xabar barcha bot foydalanuvchilariga yuborilishi kerak bo\'lsa, tepadagi Auditoriyani <b>"Barcha foydalanuvchilar"</b>ga o\'zgartirib Saqlang.'
+                f'</div>'
+            )
+        else:
+            info_html = (
+                f'<div style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #86efac; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">'
+                f'👥 Tanlangan auditoriya: <b>{target_name}</b> (Jami <b>{target_count} ta</b> foydalanuvchiga yuboriladi).'
+                f'</div>'
+            )
+
+        return format_html(
+            '<div style="background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 15px;">'
+            '{info_html}'
+            '<a href="{send_url}" onclick="return confirm(\'Rostdan ham ushbu xabarnoma {target_count} ta foydalanuvchiga yuborilsinmi?\');" style="background: {bg_color}; color: #fff; font-weight: bold; padding: 9px 18px; border-radius: 8px; text-decoration: none; display: inline-block; font-size: 13px;">'
+            '{btn_text}</a>'
+            '</div>',
+            info_html=mark_safe(info_html),
+            send_url=send_url,
+            target_count=target_count,
+            bg_color=bg_color,
+            btn_text=btn_text
+        )
+    send_action_panel.short_description = "Yuborish Boshqaruvi"
+
     def message_preview(self, obj):
         try:
             img_html = ""
@@ -483,6 +553,68 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
             return f"Ko'rinish yuklanmadi: {e}"
     message_preview.short_description = "Xabar Ko'rinishi (Preview)"
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:message_id>/send/', self.admin_site.admin_view(self.send_single_broadcast), name='api_broadcastmessage_send'),
+        ]
+        return custom_urls + urls
+
+    def send_single_broadcast(self, request, message_id):
+        msg = get_object_or_404(BroadcastMessage, pk=message_id)
+
+        # Filter audience
+        if msg.target_audience == 'active':
+            users = TelegramUser.objects.filter(attempts__isnull=False).distinct()
+        elif msg.target_audience == 'inactive':
+            users = TelegramUser.objects.filter(attempts__isnull=True)
+        else:
+            users = TelegramUser.objects.all()
+
+        count = users.count()
+        if count == 0:
+            audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
+            self.message_user(
+                request,
+                f"Diqqat: '{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. Xabar yuborilmadi. Agar xabarni barcha bot foydalanuvchilariga yubormoqchi bo'lsangiz, Auditoriyani 'Barcha foydalanuvchilar'ga o'zgartirib saqlang.",
+                level=messages.WARNING
+            )
+            return redirect('admin:api_broadcastmessage_changelist')
+
+        msg.status = 'sending'
+        msg.save()
+
+        photo_file = msg.photo.file if msg.photo else None
+        sent, failed, errors = broadcast_to_users(
+            user_qs=users,
+            text=msg.message_text,
+            photo=photo_file,
+            button_text=msg.button_text,
+            button_url=msg.button_url
+        )
+
+        msg.sent_count = sent
+        msg.failed_count = failed
+        msg.status = 'sent' if (sent > 0 or failed == 0) else 'failed'
+        msg.sent_at = timezone.now()
+        if errors:
+            msg.error_summary = "\n".join(errors[:20])
+        msg.save()
+
+        if sent > 0:
+            self.message_user(
+                request,
+                f"🎉 '{msg.title}' xabarnomasi muvaffaqiyatli yuborildi! Jami yetkazildi: {sent} ta, bloklaganlar: {failed} ta.",
+                level=messages.SUCCESS
+            )
+        else:
+            self.message_user(
+                request,
+                f"⚠️ '{msg.title}' yuborishda xatolik yuz berdi. Xatoliklar: {', '.join(errors[:3])}",
+                level=messages.ERROR
+            )
+        return redirect('admin:api_broadcastmessage_changelist')
+
     def send_broadcast_action(self, request, queryset):
         total_sent = 0
         total_failed = 0
@@ -495,6 +627,15 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
                 users = TelegramUser.objects.filter(attempts__isnull=True)
             else:
                 users = TelegramUser.objects.all()
+
+            if not users.exists():
+                audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
+                self.message_user(
+                    request,
+                    f"'{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. O'tkazib yuborildi.",
+                    level=messages.WARNING
+                )
+                continue
 
             msg.status = 'sending'
             msg.save()
@@ -510,7 +651,7 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
 
             msg.sent_count = sent
             msg.failed_count = failed
-            msg.status = 'sent' if sent > 0 or failed == 0 else 'failed'
+            msg.status = 'sent' if (sent > 0 or failed == 0) else 'failed'
             msg.sent_at = timezone.now()
             if errors:
                 msg.error_summary = "\n".join(errors[:20])
