@@ -7,6 +7,9 @@ python backend/manage.py migrate --noinput || true
 echo "==> Seeding sample Quran data..."
 python backend/manage.py import_quran --sample || true
 
+echo "==> Setting up admin account..."
+python backend/manage.py setup_admin || true
+
 echo "==> Collecting static assets..."
 python backend/manage.py collectstatic --noinput || true
 
