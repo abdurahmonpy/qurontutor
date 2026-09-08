@@ -124,12 +124,12 @@ class ScoreRangeFilter(admin.SimpleListFilter):
 class TelegramUserAdmin(admin.ModelAdmin):
     list_display = (
         'telegram_id', 'full_name', 'username_display',
-        'current_location', 'attempts_count_display', 'avg_score_display', 'created_at'
+        'current_location', 'attempts_count_display', 'avg_score_display', 'created_at', 'direct_message_button'
     )
     search_fields = ('telegram_id', 'username', 'first_name', 'last_name')
     list_filter = ('current_surah_number', 'created_at')
     readonly_fields = ('telegram_id', 'created_at')
-    actions = [export_users_csv, 'send_reminder_action']
+    actions = [export_users_csv, 'send_broadcast_to_selected_action', 'send_reminder_action']
 
     def full_name(self, obj):
         name = f"{obj.first_name} {obj.last_name}".strip()
@@ -165,6 +165,56 @@ class TelegramUserAdmin(admin.ModelAdmin):
         except Exception:
             return "-"
     avg_score_display.short_description = "O'rtacha Ball"
+
+    def direct_message_button(self, obj):
+        url = reverse('admin:api_telegramuser_direct_msg', args=[obj.pk])
+        return format_html(
+            '<a class="button" href="{}" style="background: #0284c7; color: #fff; padding: 3px 9px; border-radius: 6px; font-size: 11px; text-decoration: none; font-weight: 600; white-space: nowrap;">✉️ Xabar yozish</a>',
+            url
+        )
+    direct_message_button.short_description = "Shaxsiy Xabar"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('<int:user_id>/direct-message/', self.admin_site.admin_view(self.direct_message_view), name='api_telegramuser_direct_msg'),
+        ]
+        return custom_urls + urls
+
+    def direct_message_view(self, request, user_id):
+        user = get_object_or_404(TelegramUser, pk=user_id)
+        msg = BroadcastMessage.objects.create(
+            title=f"Shaxsiy xabar: {user.first_name or user.telegram_id}",
+            target_audience='selected',
+            status='draft',
+            message_text=f"Assalomu alaykum, {user.first_name or 'muhtaram qori'}!\n\n"
+        )
+        msg.selected_users.add(user)
+        self.message_user(
+            request,
+            f"{user} uchun shaxsiy xabarnoma yaratildi. Matnni yozib, pastdagi 'Yuborish' tugmasini bosing!",
+            level=messages.SUCCESS
+        )
+        return redirect('admin:api_broadcastmessage_change', msg.pk)
+
+    def send_broadcast_to_selected_action(self, request, queryset):
+        count = queryset.count()
+        if count == 0:
+            return
+        msg = BroadcastMessage.objects.create(
+            title=f"Tanlangan {count} ta foydalanuvchiga xabar",
+            target_audience='selected',
+            status='draft',
+            message_text="Assalomu alaykum, {name}!\n\n"
+        )
+        msg.selected_users.set(queryset)
+        self.message_user(
+            request,
+            f"{count} ta foydalanuvchi uchun yangi xabarnoma qoralamasi yaratildi. Matnni kiriting va yuboring!",
+            level=messages.SUCCESS
+        )
+        return redirect('admin:api_broadcastmessage_change', msg.pk)
+    send_broadcast_to_selected_action.short_description = "📨 Tanlanganlarga maxsus xabar yaratish (Broadcast)"
 
     def send_reminder_action(self, request, queryset):
         text = "Assalomu alaykum, muhtaram {name}! Qur'on tilovatingizni davom ettirish va yangi oyatlarni topshirish uchun botimizga kiring: @qurontutorbot"
@@ -406,13 +456,14 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
     )
     list_filter = ('status', 'target_audience', 'created_at')
     search_fields = ('title', 'message_text')
+    filter_horizontal = ('selected_users',)
     readonly_fields = ('send_action_panel', 'sent_count', 'failed_count', 'error_summary', 'sent_at', 'created_at', 'message_preview')
     actions = ['send_broadcast_action']
 
     fieldsets = (
         ("Xabarnoma Mazmuni", {
-            'fields': ('title', 'target_audience', 'message_text', 'photo'),
-            'description': "Telegram orqali jo'natiladigan xabar matni va rasmini kiriting. Matnda HTML teglari (<b>qalin</b>, <i>kursiv</i>) hamda {name} shaxsiy ism o'zgaruvchisidan foydalanishingiz mumkin."
+            'fields': ('title', 'target_audience', 'selected_users', 'message_text', 'photo'),
+            'description': "Telegram orqali jo'natiladigan xabar matni va rasmini kiriting. Agar auditoriya sifatida <b>'Tanlangan aniq foydalanuvchilar'</b> tanlansa, pastdagi ro'yxatdan kerakli foydalanuvchilarni o'ng tomonga o'tkazing."
         }),
         ("Inline Tugma (Ixtiyoriy)", {
             'fields': ('button_text', 'button_url'),
@@ -424,10 +475,12 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
     )
 
     def target_badge(self, obj):
+        count_str = f" ({obj.selected_users.count()} ta)" if (obj.pk and obj.target_audience == 'selected') else ""
         labels = {
             'all': ("Barcha foydalanuvchilar", "#0284c7"),
             'active': ("Faol qorilar", "#16a34a"),
             'inactive': ("Hali o'qimaganlar", "#d97706"),
+            'selected': (f"Tanlanganlar{count_str}", "#8b5cf6"),
         }
         text, color = labels.get(obj.target_audience, (obj.target_audience, "#6b7280"))
         return format_html(
@@ -495,6 +548,8 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
             target_count = TelegramUser.objects.filter(attempts__isnull=False).distinct().count()
         elif obj.target_audience == 'inactive':
             target_count = TelegramUser.objects.filter(attempts__isnull=True).count()
+        elif obj.target_audience == 'selected':
+            target_count = obj.selected_users.count()
         else:
             target_count = TelegramUser.objects.count()
 
@@ -502,9 +557,13 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
         bg_color = "#16a34a" if obj.status == 'draft' else "#0284c7"
         
         if target_count == 0:
+            if obj.target_audience == 'selected':
+                msg_warning = "⚠️ Siz auditoriya sifatida <b>'Tanlangan aniq foydalanuvchilar'</b>ni belgiladingiz, ammo ro'yxatdan birorta ham foydalanuvchini tanlamadingiz. Tepadagi <b>'Tanlangan foydalanuvchilar'</b> qutisidan kerakli qorilarni o'ng tarafga o'tkazib Saqlang."
+            else:
+                msg_warning = f"⚠️ Tanlangan auditoriyada (<b>{target_name}</b>) hozircha <b>0 ta</b> foydalanuvchi mavjud. Agar xabar barcha bot foydalanuvchilariga yuborilishi kerak bo'lsa, tepadagi Auditoriyani <b>'Barcha foydalanuvchilar'</b>ga o'zgartirib Saqlang."
             info_html = (
                 f'<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 12px;">'
-                f'⚠️ Tanlangan auditoriyada (<b>{target_name}</b>) hozircha <b>0 ta</b> foydalanuvchi mavjud. Agar xabar barcha bot foydalanuvchilariga yuborilishi kerak bo\'lsa, tepadagi Auditoriyani <b>"Barcha foydalanuvchilar"</b>ga o\'zgartirib Saqlang.'
+                f'{msg_warning}'
                 f'</div>'
             )
         else:
@@ -568,17 +627,19 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
             users = TelegramUser.objects.filter(attempts__isnull=False).distinct()
         elif msg.target_audience == 'inactive':
             users = TelegramUser.objects.filter(attempts__isnull=True)
+        elif msg.target_audience == 'selected':
+            users = msg.selected_users.all()
         else:
             users = TelegramUser.objects.all()
 
         count = users.count()
         if count == 0:
-            audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
-            self.message_user(
-                request,
-                f"Diqqat: '{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. Xabar yuborilmadi. Agar xabarni barcha bot foydalanuvchilariga yubormoqchi bo'lsangiz, Auditoriyani 'Barcha foydalanuvchilar'ga o'zgartirib saqlang.",
-                level=messages.WARNING
-            )
+            if msg.target_audience == 'selected':
+                warn_text = f"Xatolik: '{msg.title}' uchun birorta ham foydalanuvchi tanlanmagan! Iltimos, xabarni ochib, 'Tanlangan foydalanuvchilar' ro'yxatidan odamlarni tanlab saqlang."
+            else:
+                audience_name = dict(BroadcastMessage.TARGET_CHOICES).get(msg.target_audience, msg.target_audience)
+                warn_text = f"Diqqat: '{msg.title}' uchun tanlangan auditoriya ({audience_name}) bo'yicha 0 ta foydalanuvchi topildi. Xabar yuborilmadi. Agar xabarni barcha bot foydalanuvchilariga yubormoqchi bo'lsangiz, Auditoriyani 'Barcha foydalanuvchilar'ga o'zgartirib saqlang."
+            self.message_user(request, warn_text, level=messages.WARNING)
             return redirect('admin:api_broadcastmessage_changelist')
 
         msg.status = 'sending'
@@ -625,6 +686,8 @@ class BroadcastMessageAdmin(admin.ModelAdmin):
                 users = TelegramUser.objects.filter(attempts__isnull=False).distinct()
             elif msg.target_audience == 'inactive':
                 users = TelegramUser.objects.filter(attempts__isnull=True)
+            elif msg.target_audience == 'selected':
+                users = msg.selected_users.all()
             else:
                 users = TelegramUser.objects.all()
 

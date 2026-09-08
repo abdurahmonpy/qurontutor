@@ -10,7 +10,9 @@ class TelegramUser(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.first_name} (@{self.username or self.telegram_id})"
+        full = f"{self.first_name} {self.last_name}".strip() or f"Foydalanuvchi #{self.telegram_id}"
+        uname = f"@{self.username}" if self.username else f"ID: {self.telegram_id}"
+        return f"{full} ({uname})"
 
 class Surah(models.Model):
     number = models.PositiveIntegerField(unique=True, db_index=True)
@@ -84,6 +86,7 @@ class BroadcastMessage(models.Model):
         ('all', 'Barcha foydalanuvchilar'),
         ('active', 'Faol qorilar (kamida 1 tilovat qilganlar)'),
         ('inactive', 'Hali tilovat topshirmaganlar'),
+        ('selected', 'Tanlangan aniq foydalanuvchilar'),
     )
 
     STATUS_CHOICES = (
@@ -99,6 +102,13 @@ class BroadcastMessage(models.Model):
     button_text = models.CharField(max_length=100, blank=True, default='', help_text="Inline tugma yozuvi (masalan: 📖 Tilovatni Boshlash)")
     button_url = models.URLField(max_length=500, blank=True, default='', help_text="Tugma bosilganda ochiladigan havola")
     target_audience = models.CharField(max_length=20, choices=TARGET_CHOICES, default='all', help_text="Xabar kimlarga yetkazilsin?")
+    selected_users = models.ManyToManyField(
+        TelegramUser,
+        blank=True,
+        related_name='targeted_broadcasts',
+        verbose_name="Tanlangan foydalanuvchilar",
+        help_text="Auditoriya 'Tanlangan aniq foydalanuvchilar' bo'lsa, xabar aynan shu foydalanuvchilarga yuboriladi."
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     sent_count = models.PositiveIntegerField(default=0, help_text="Yetkazilganlar soni")
     failed_count = models.PositiveIntegerField(default=0, help_text="Yetib bormaganlar soni")
