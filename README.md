@@ -94,7 +94,7 @@ Loyiha Railway platformasida to'liq avtomatlashtirilgan holda ishlashga moslasht
 
 ### 3-qadam: Muhit o'zgaruvchilarini (Variables) kiritish
 Ilovaning **"Variables"** bo'limiga kiring va quyidagilarni kiriting:
-- `BOT_TOKEN` = `8947719134:AAGgSRy42LJdAOwWuhMdyK3d9jUO9e2mS_g`
+- `BOT_TOKEN` = `YOUR_BOT_TOKEN_HERE` (BotFather bergan token)
 - `DEBUG` = `False`
 - `DJANGO_SECRET_KEY` = `ixtiyoriy_uzun_maxfiy_kalit_yozing`
 - `WEBAPP_URL` = `https://<sizning-railway-domeningiz>.up.railway.app/`
